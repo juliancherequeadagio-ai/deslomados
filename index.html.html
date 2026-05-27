@@ -1,0 +1,1822 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tablero de deslomados</title>
+  <style>
+    :root {
+      --bg: #0c1018;
+      --panel: rgba(255, 255, 255, .075);
+      --panel-2: rgba(255, 255, 255, .11);
+      --border: rgba(255, 255, 255, .14);
+      --text: #f6f7fb;
+      --muted: #aeb7c7;
+      --muted-2: #7f8aa2;
+      --accent: #9df871;
+      --accent-2: #5eead4;
+      --accent-3: #f8d66d;
+      --danger: #ff6b8b;
+      --shadow: 0 24px 70px rgba(0, 0, 0, .35);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(94, 234, 212, .20), transparent 34rem),
+        radial-gradient(circle at top right, rgba(157, 248, 113, .18), transparent 34rem),
+        linear-gradient(135deg, #090d14 0%, #101725 50%, #0b1018 100%);
+    }
+
+    a { color: inherit; }
+
+    .shell {
+      width: min(1440px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 34px;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) + 8px);
+      background: linear-gradient(135deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .04));
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -140px -180px auto;
+      width: 420px;
+      height: 420px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(157, 248, 113, .28), transparent 70%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin: 0 0 14px;
+      padding: 8px 12px;
+      color: #05110a;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 999px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 920px;
+      font-size: clamp(42px, 8vw, 92px);
+      line-height: .92;
+      letter-spacing: -.08em;
+    }
+
+    .hero p {
+      max-width: 820px;
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: clamp(16px, 2vw, 20px);
+      line-height: 1.6;
+    }
+
+    .upload-grid {
+      display: grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .drop-zone {
+      position: relative;
+      display: grid;
+      min-height: 190px;
+      place-items: center;
+      padding: 26px;
+      text-align: center;
+      border: 1px dashed rgba(255, 255, 255, .35);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, .055);
+      transition: .18s ease;
+    }
+
+    .drop-zone.is-over {
+      border-color: var(--accent);
+      background: rgba(157, 248, 113, .09);
+      transform: translateY(-1px);
+    }
+
+    .drop-zone input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .drop-icon {
+      width: 54px;
+      height: 54px;
+      margin: 0 auto 14px;
+      display: grid;
+      place-items: center;
+      color: #06130a;
+      font-size: 26px;
+      font-weight: 900;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }
+
+    .drop-zone strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 20px;
+    }
+
+    .drop-zone span, .note, .help {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .info-card {
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, .065);
+    }
+
+    .info-card h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      letter-spacing: -.02em;
+    }
+
+    .info-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .status {
+      margin-top: 18px;
+      min-height: 52px;
+      padding: 16px 18px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .055);
+      display: none;
+    }
+
+    .status.show { display: block; }
+    .status.ok { color: var(--accent); }
+    .status.err { color: var(--danger); }
+
+    .dashboard { margin-top: 24px; }
+
+    .language-intro {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 22px;
+      border: 1px solid rgba(157, 248, 113, .26);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(157, 248, 113, .13), rgba(94, 234, 212, .07));
+      box-shadow: 0 18px 40px rgba(0, 0, 0, .14);
+    }
+
+    .language-intro h2 {
+      margin: 0 0 6px;
+      font-size: clamp(24px, 3vw, 38px);
+      letter-spacing: -.055em;
+    }
+
+    .language-intro p {
+      max-width: 820px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .language-intro .eyebrow {
+      margin: 0 0 10px;
+      font-size: 11px;
+    }
+
+    .version-chip {
+      flex: 0 0 auto;
+      padding: 10px 13px;
+      color: #06130a;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      background: var(--accent-3);
+      white-space: nowrap;
+    }
+
+    .hidden { display: none !important; }
+
+    .panel {
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .095), rgba(255, 255, 255, .045));
+      box-shadow: 0 18px 40px rgba(0, 0, 0, .18);
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 18px;
+      letter-spacing: -.03em;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      gap: 12px;
+      align-items: end;
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      backdrop-filter: blur(20px);
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    select, input[type="date"], button {
+      width: 100%;
+      min-height: 42px;
+      padding: 10px 12px;
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, .16);
+      border-radius: 14px;
+      background: rgba(8, 13, 22, .78);
+      outline: none;
+    }
+
+    select:focus, input[type="date"]:focus, button:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(157, 248, 113, .12);
+    }
+
+    button {
+      font-weight: 900;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      color: #07100a;
+      border: 0;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+
+    .btn-ghost { background: rgba(255, 255, 255, .065); }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(150px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .kpi {
+      overflow: hidden;
+      position: relative;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, .07);
+    }
+
+    .kpi::after {
+      content: "";
+      position: absolute;
+      inset: auto -36px -46px auto;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(157, 248, 113, .10);
+    }
+
+    .kpi .label {
+      color: var(--muted-2);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .kpi .value {
+      margin-top: 10px;
+      font-size: clamp(26px, 3vw, 42px);
+      font-weight: 950;
+      letter-spacing: -.06em;
+      white-space: nowrap;
+    }
+
+    .kpi .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(210px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .top-card {
+      min-height: 190px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(157, 248, 113, .10), rgba(255, 255, 255, .045));
+    }
+
+    .top-card h3 {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .top-card .champion {
+      margin-top: 14px;
+      font-size: clamp(23px, 2.4vw, 34px);
+      font-weight: 950;
+      letter-spacing: -.055em;
+      word-break: break-word;
+    }
+
+    .top-card .champion-count {
+      margin-top: 8px;
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    .progress {
+      height: 9px;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .10);
+    }
+
+    .progress > span {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .35s ease;
+    }
+
+    .main-grid, .insights-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    .panel-head, .section-head {
+      display: flex;
+      gap: 14px;
+      align-items: start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .panel-head h2, .section-head h2 { margin-bottom: 4px; }
+
+    .panel-head p, .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .section-head label {
+      width: min(330px, 100%);
+      min-width: 230px;
+    }
+
+    .stat-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, .09);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .045);
+    }
+
+    .stat-rank {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      color: #07100a;
+      font-weight: 950;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-main {
+      min-width: 0;
+    }
+
+    .stat-label {
+      overflow: hidden;
+      color: var(--text);
+      font-weight: 900;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stat-meta {
+      margin-top: 3px;
+      color: var(--muted-2);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .stat-count {
+      color: var(--accent);
+      font-size: 18px;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 6px;
+      padding: 3px 8px;
+      color: #06130a;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      background: var(--accent-3);
+    }
+
+    .topic-hero {
+      display: grid;
+      grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .topic-winner {
+      min-height: 180px;
+      padding: 20px;
+      border: 1px solid rgba(157, 248, 113, .22);
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(157, 248, 113, .14), rgba(94, 234, 212, .07));
+    }
+
+    .topic-winner .label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .topic-winner .word {
+      margin-top: 12px;
+      font-size: clamp(34px, 5vw, 62px);
+      line-height: .92;
+      font-weight: 950;
+      letter-spacing: -.07em;
+      word-break: break-word;
+    }
+
+    .topic-winner .detail {
+      margin-top: 14px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .topic-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      align-content: start;
+    }
+
+    .topic-tag {
+      padding: 9px 11px;
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .06);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .topic-tag small {
+      color: var(--muted-2);
+      font-weight: 900;
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: minmax(110px, 210px) 1fr minmax(54px, auto);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .bar-name {
+      min-width: 0;
+      color: var(--text);
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bar-wrap {
+      height: 20px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .bar {
+      height: 100%;
+      min-width: 3px;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+
+    .bar-val {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .timeline-wrap {
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .timeline {
+      display: flex;
+      align-items: end;
+      gap: 6px;
+      min-height: 250px;
+      padding: 14px 4px 8px;
+    }
+
+    .time-item {
+      position: relative;
+      display: grid;
+      align-items: end;
+      width: 18px;
+      min-width: 18px;
+      height: 205px;
+    }
+
+    .time-bar {
+      width: 100%;
+      min-height: 3px;
+      border-radius: 999px 999px 4px 4px;
+      background: linear-gradient(180deg, var(--accent-2), rgba(157, 248, 113, .65));
+    }
+
+    .time-label {
+      position: absolute;
+      left: 50%;
+      bottom: -28px;
+      transform: translateX(-50%) rotate(-55deg);
+      transform-origin: top left;
+      width: 86px;
+      color: var(--muted-2);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .heatmap {
+      display: grid;
+      grid-template-columns: 78px repeat(24, minmax(17px, 1fr));
+      gap: 4px;
+      align-items: center;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .heat-label, .hour-label {
+      color: var(--muted-2);
+      font-size: 11px;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .hour-label { text-align: center; }
+
+    .heat-cell {
+      aspect-ratio: 1 / 1;
+      min-width: 17px;
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 5px;
+      background: rgba(157, 248, 113, var(--alpha, .06));
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      background: rgba(10, 15, 24, .98);
+    }
+
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tr:last-child td { border-bottom: 0; }
+
+    .empty {
+      padding: 28px;
+      color: var(--muted);
+      text-align: center;
+      border: 1px dashed rgba(255, 255, 255, .18);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted-2);
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    @media (max-width: 1120px) {
+      .controls { grid-template-columns: repeat(3, minmax(150px, 1fr)); position: static; }
+      .kpi-grid { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+      .top-grid { grid-template-columns: repeat(2, minmax(210px, 1fr)); }
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 20px, 1440px); padding-top: 10px; }
+      .hero { padding: 22px; }
+      .upload-grid, .controls, .kpi-grid, .top-grid, .insights-grid, .topic-hero { grid-template-columns: 1fr; }
+      .language-intro { display: grid; }
+      .version-chip { justify-self: start; }
+      .panel-head, .section-head { display: grid; }
+      .section-head label { min-width: 0; width: 100%; }
+      .stat-row { grid-template-columns: 38px minmax(0, 1fr); }
+      .stat-count { grid-column: 2; }
+      .bar-row { grid-template-columns: 1fr; gap: 6px; }
+      .bar-val { text-align: left; }
+      .panel { padding: 16px; }
+      .heatmap { grid-template-columns: 64px repeat(24, 18px); }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">WhatsApp analytics local</p>
+      <h1>Tablero de deslomados</h1>
+      <p>Subi un export de WhatsApp en .zip o .txt y el tablero se completa solo con rankings, tops por semana, mes, anio e historico, filtros por fecha y metricas por persona. Todo se procesa en tu navegador.</p>
+
+      <div class="upload-grid">
+        <div class="drop-zone" id="dropZone">
+          <input id="fileInput" type="file" accept=".zip,.txt,text/plain,application/zip" />
+          <div>
+            <div class="drop-icon">+</div>
+            <strong>Elegi o arrastra el archivo del chat</strong>
+            <span>Funciona con el .zip exportado por WhatsApp o con el .txt descomprimido.</span>
+          </div>
+        </div>
+        <aside class="info-card">
+          <h3>Incluye</h3>
+          <ul>
+            <li>Mensajes por persona.</li>
+            <li>Segmentacion semanal, mensual y anual.</li>
+            <li>Top semanal, mensual, anual e historico.</li>
+            <li>Heatmap por dia y hora.</li>
+            <li>Hot topic semanal automatico.</li>
+            <li>Export del ranking a CSV.</li>
+          </ul>
+        </aside>
+      </div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <section id="dashboard" class="dashboard hidden">
+      <div class="panel controls" aria-label="Filtros del dashboard">
+        <label>Persona
+          <select id="personFilter"><option value="all">Todos</option></select>
+        </label>
+        <label>Desde
+          <input id="dateFrom" type="date" />
+        </label>
+        <label>Hasta
+          <input id="dateTo" type="date" />
+        </label>
+        <label>Agrupar evolucion
+          <select id="groupBy">
+            <option value="week">Semana</option>
+            <option value="day">Dia</option>
+            <option value="month">Mes</option>
+            <option value="year">Anio</option>
+          </select>
+        </label>
+        <label>Ranking
+          <select id="topLimit">
+            <option value="10">Top 10</option>
+            <option value="20" selected>Top 20</option>
+            <option value="50">Top 50</option>
+            <option value="all">Todos</option>
+          </select>
+        </label>
+        <label>Formato fecha
+          <select id="dateFormat">
+            <option value="auto" selected>Auto</option>
+            <option value="dmy">DD/MM/AA</option>
+            <option value="mdy">MM/DD/AA</option>
+          </select>
+        </label>
+        <button id="resetFilters" class="btn-ghost" type="button">Reset filtros</button>
+        <button id="exportCsv" class="btn-primary" type="button">Exportar CSV</button>
+        <button id="jumpHotTopic" class="btn-ghost" type="button" onclick="document.getElementById('hotTopicWeekly').scrollIntoView({behavior: 'smooth', block: 'start'});">Ver hot topic</button>
+      </div>
+
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="top-grid">
+        <article class="top-card" id="topWeekCard">
+          <h3>Top semanal</h3>
+          <select id="weekSelect"></select>
+          <div class="champion" data-role="name">-</div>
+          <div class="champion-count" data-role="count">-</div>
+          <div class="progress"><span></span></div>
+          <p class="help" data-role="sub"></p>
+        </article>
+        <article class="top-card" id="topMonthCard">
+          <h3>Top mensual</h3>
+          <select id="monthSelect"></select>
+          <div class="champion" data-role="name">-</div>
+          <div class="champion-count" data-role="count">-</div>
+          <div class="progress"><span></span></div>
+          <p class="help" data-role="sub"></p>
+        </article>
+        <article class="top-card" id="topYearCard">
+          <h3>Top anual</h3>
+          <select id="yearSelect"></select>
+          <div class="champion" data-role="name">-</div>
+          <div class="champion-count" data-role="count">-</div>
+          <div class="progress"><span></span></div>
+          <p class="help" data-role="sub"></p>
+        </article>
+        <article class="top-card" id="topHistoryCard">
+          <h3>Top historico</h3>
+          <div class="champion" data-role="name">-</div>
+          <div class="champion-count" data-role="count">-</div>
+          <div class="progress"><span></span></div>
+          <p class="help" data-role="sub"></p>
+        </article>
+      </div>
+
+
+      <article id="hotTopicWeekly" class="panel full">
+        <div class="section-head">
+          <div>
+            <h2>Hot topic semanal</h2>
+            <p>Detecta que termino fue mas distintivo en una semana comparado contra el resto del chat.</p>
+          </div>
+          <label>Semana
+            <select id="hotWeekSelect"></select>
+          </label>
+        </div>
+        <div id="hotTopic"></div>
+      </article>
+
+      <div class="main-grid">
+        <article class="panel">
+          <h2>Mensajes por persona</h2>
+          <div id="personChart"></div>
+        </article>
+        <article class="panel">
+          <h2>Evolucion temporal</h2>
+          <div id="timelineChart"></div>
+        </article>
+        <article class="panel full">
+          <h2>Mapa de calor por dia y hora</h2>
+          <div id="heatmap"></div>
+        </article>
+        <article class="panel full">
+          <h2>Ranking detallado</h2>
+          <div id="rankingTable"></div>
+        </article>
+      </div>
+      <p class="footer-note" id="fileSummary"></p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const state = {
+        messages: [],
+        systemLines: 0,
+        invalidLines: 0,
+        fileName: "",
+        textFileName: "",
+        inferredOrder: "dmy",
+        periods: { week: [], month: [], year: [] }
+      };
+
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+      const refs = {
+        dropZone: $("#dropZone"),
+        fileInput: $("#fileInput"),
+        status: $("#status"),
+        dashboard: $("#dashboard"),
+        personFilter: $("#personFilter"),
+        dateFrom: $("#dateFrom"),
+        dateTo: $("#dateTo"),
+        groupBy: $("#groupBy"),
+        topLimit: $("#topLimit"),
+        dateFormat: $("#dateFormat"),
+        resetFilters: $("#resetFilters"),
+        exportCsv: $("#exportCsv"),
+        kpiGrid: $("#kpiGrid"),
+        weekSelect: $("#weekSelect"),
+        monthSelect: $("#monthSelect"),
+        yearSelect: $("#yearSelect"),
+        hotWeekSelect: $("#hotWeekSelect"),
+        hotTopic: $("#hotTopic"),
+        topWeekCard: $("#topWeekCard"),
+        topMonthCard: $("#topMonthCard"),
+        topYearCard: $("#topYearCard"),
+        topHistoryCard: $("#topHistoryCard"),
+        personChart: $("#personChart"),
+        timelineChart: $("#timelineChart"),
+        heatmap: $("#heatmap"),
+        rankingTable: $("#rankingTable"),
+        fileSummary: $("#fileSummary")
+      };
+
+      const dayNames = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+      const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+      const STOP_WORDS = new Set([
+        "ahi", "algo", "algun", "alguna", "algunas", "alguno", "algunos", "alla", "alli", "ante", "antes", "aquel", "aquella", "aquellas", "aquello", "aquellos", "aqui", "asi", "cada", "casi", "como", "con", "cual", "cuales", "cuando", "cuanto", "cuantos", "del", "desde", "donde", "dos", "ese", "esa", "esas", "eso", "esos", "esta", "estas", "este", "esto", "estos", "fue", "han", "hay", "hoy", "jaja", "jajaj", "jajaja", "jajajaja", "jajajajaj", "jajajajaja", "jajajajajaja", "las", "les", "los", "mas", "menos", "muy", "nada", "nos", "para", "pero", "por", "porque", "pues", "que", "quien", "sin", "son", "sus", "tambien", "tan", "tanto", "tenes", "tengo", "tiene", "tienen", "todo", "todos", "tus", "una", "uno", "unos", "ustedes", "vos", "voy", "whatsapp"
+      ]);
+      const INSULT_PATTERNS = [
+        { label: "boludo/a", re: /\bbolud[oa]s?\b/g },
+        { label: "pelotudo/a", re: /\bpelotud[oa]s?\b/g },
+        { label: "forro/a", re: /\bforr[oa]s?\b/g },
+        { label: "hijo/a de puta", re: /\bhij[oa]s?\s+de\s+puta\b|\bhdp\b/g },
+        { label: "la concha de tu madre", re: /\bla\s+concha\s+de\s+tu\s+madre\b|\bconcha\s+de\s+tu\s+madre\b/g },
+        { label: "la puta madre", re: /\bla\s+puta\s+madre\b|\blpm\b/g },
+        { label: "la puta que te pario", re: /\bla\s+puta\s+que\s+te\s+pario\b|\blpqtp\b/g },
+        { label: "concha", re: /\bconchas?\b/g },
+        { label: "gil", re: /\bgiles?\b|\bgil\b/g },
+        { label: "idiota", re: /\bidiotas?\b/g },
+        { label: "imbecil", re: /\bimbeciles?\b|\bimbecil\b/g },
+        { label: "tarado/a", re: /\btarad[oa]s?\b/g },
+        { label: "salame", re: /\bsalames?\b/g },
+        { label: "pajero/a", re: /\bpajer[oa]s?\b/g },
+        { label: "cagon/a", re: /\bcagon(?:es|as)?\b|\bcagona?s?\b/g },
+        { label: "cornudo/a", re: /\bcornud[oa]s?\b/g },
+        { label: "mierda", re: /\bmierdas?\b/g },
+        { label: "orto", re: /\bortos?\b/g },
+        { label: "choto/a", re: /\bchot[oa]s?\b/g }
+      ];
+
+      function showStatus(message, type = "") {
+        refs.status.textContent = message;
+        refs.status.className = "status show" + (type ? " " + type : "");
+      }
+
+      function hideStatus() {
+        refs.status.className = "status";
+        refs.status.textContent = "";
+      }
+
+      function formatNumber(value) {
+        return new Intl.NumberFormat("es-AR").format(value || 0);
+      }
+
+      function formatPercent(value) {
+        if (!Number.isFinite(value)) return "0%";
+        return new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 }).format(value) + "%";
+      }
+
+      function pad2(value) {
+        return String(value).padStart(2, "0");
+      }
+
+      function toDateInputValue(date) {
+        return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+      }
+
+      function formatDateShort(date) {
+        return `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${String(date.getFullYear()).slice(-2)}`;
+      }
+
+      function cleanInvisible(text) {
+        return String(text || "").replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, "").trim();
+      }
+
+      function isZipBuffer(buffer, fileName) {
+        const bytes = new Uint8Array(buffer, 0, Math.min(4, buffer.byteLength));
+        return /\.zip$/i.test(fileName || "") || (bytes[0] === 0x50 && bytes[1] === 0x4b);
+      }
+
+      function decodeText(buffer) {
+        const utf8 = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+        const replacementCount = (utf8.match(/\uFFFD/g) || []).length;
+        if (replacementCount > Math.max(8, utf8.length * 0.005)) {
+          try {
+            return new TextDecoder("windows-1252", { fatal: false }).decode(buffer);
+          } catch (error) {
+            return utf8;
+          }
+        }
+        return utf8;
+      }
+
+      function decodeZipName(bytes, flags) {
+        const decoder = new TextDecoder((flags & 0x0800) ? "utf-8" : "utf-8", { fatal: false });
+        return decoder.decode(bytes);
+      }
+
+      function findEndOfCentralDirectory(bytes) {
+        const min = Math.max(0, bytes.length - 0xffff - 22);
+        for (let i = bytes.length - 22; i >= min; i--) {
+          if (bytes[i] === 0x50 && bytes[i + 1] === 0x4b && bytes[i + 2] === 0x05 && bytes[i + 3] === 0x06) return i;
+        }
+        return -1;
+      }
+
+      function listZipEntries(buffer) {
+        const bytes = new Uint8Array(buffer);
+        const view = new DataView(buffer);
+        const eocd = findEndOfCentralDirectory(bytes);
+        if (eocd < 0) throw new Error("No pude leer la estructura del ZIP.");
+        const totalEntries = view.getUint16(eocd + 10, true);
+        let ptr = view.getUint32(eocd + 16, true);
+        const entries = [];
+
+        for (let i = 0; i < totalEntries && ptr < bytes.length; i++) {
+          if (view.getUint32(ptr, true) !== 0x02014b50) break;
+          const flags = view.getUint16(ptr + 8, true);
+          const method = view.getUint16(ptr + 10, true);
+          const compressedSize = view.getUint32(ptr + 20, true);
+          const uncompressedSize = view.getUint32(ptr + 24, true);
+          const nameLength = view.getUint16(ptr + 28, true);
+          const extraLength = view.getUint16(ptr + 30, true);
+          const commentLength = view.getUint16(ptr + 32, true);
+          const localHeaderOffset = view.getUint32(ptr + 42, true);
+          const nameBytes = bytes.slice(ptr + 46, ptr + 46 + nameLength);
+          const name = decodeZipName(nameBytes, flags);
+          entries.push({ name, flags, method, compressedSize, uncompressedSize, localHeaderOffset, directory: /\/$/.test(name) });
+          ptr += 46 + nameLength + extraLength + commentLength;
+        }
+        return entries;
+      }
+
+      async function inflateRaw(buffer) {
+        if (typeof DecompressionStream === "undefined") {
+          throw new Error("Este navegador no puede descomprimir ZIP en una pagina local. Extrae el .txt del ZIP y subilo directamente.");
+        }
+        const formats = ["deflate-raw", "deflate"];
+        let lastError;
+        for (const format of formats) {
+          try {
+            const stream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream(format));
+            return await new Response(stream).arrayBuffer();
+          } catch (error) {
+            lastError = error;
+          }
+        }
+        throw lastError || new Error("No pude descomprimir el archivo del ZIP.");
+      }
+
+      async function extractZipEntry(buffer, entry) {
+        const view = new DataView(buffer);
+        if (view.getUint32(entry.localHeaderOffset, true) !== 0x04034b50) {
+          throw new Error("El ZIP no tiene un encabezado local valido.");
+        }
+        const nameLength = view.getUint16(entry.localHeaderOffset + 26, true);
+        const extraLength = view.getUint16(entry.localHeaderOffset + 28, true);
+        const dataStart = entry.localHeaderOffset + 30 + nameLength + extraLength;
+        const compressed = buffer.slice(dataStart, dataStart + entry.compressedSize);
+        if (entry.method === 0) return compressed;
+        if (entry.method === 8) return inflateRaw(compressed);
+        throw new Error("Metodo de compresion ZIP no soportado: " + entry.method + ". Proba subiendo el .txt descomprimido.");
+      }
+
+      async function readUploadedFile(file) {
+        const buffer = await file.arrayBuffer();
+        if (!isZipBuffer(buffer, file.name)) {
+          return { text: decodeText(buffer), textFileName: file.name || "chat.txt" };
+        }
+        showStatus("ZIP detectado. Buscando el .txt del chat...", "");
+        const entries = listZipEntries(buffer)
+          .filter(entry => !entry.directory && /\.txt$/i.test(entry.name))
+          .sort((a, b) => b.uncompressedSize - a.uncompressedSize);
+        if (!entries.length) throw new Error("No encontre ningun .txt dentro del ZIP.");
+        const selected = entries[0];
+        const textBuffer = await extractZipEntry(buffer, selected);
+        return { text: decodeText(textBuffer), textFileName: selected.name };
+      }
+
+      function inferDateOrder(text) {
+        const sample = text.slice(0, 120000);
+        const re = /(?:^|\n)\s*[\u200e\u200f\u202a-\u202e\ufeff]*(?:\[)?(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/g;
+        let dmy = 0;
+        let mdy = 0;
+        let match;
+        let count = 0;
+        while ((match = re.exec(sample)) && count < 400) {
+          const first = Number(match[1]);
+          const second = Number(match[2]);
+          if (first > 12) dmy += 3;
+          if (second > 12) mdy += 3;
+          if (first > 0 && second > 0) count++;
+        }
+        return mdy > dmy ? "mdy" : "dmy";
+      }
+
+      function normalizeYear(value) {
+        const year = Number(value);
+        if (String(value).length === 2) return year >= 70 ? 1900 + year : 2000 + year;
+        return year;
+      }
+
+      function buildDate(parts, dateOrder) {
+        let first = Number(parts[1]);
+        let second = Number(parts[2]);
+        const year = normalizeYear(parts[3]);
+        let hour = Number(parts[4]);
+        const minute = Number(parts[5]);
+        const secondPart = parts[6] ? Number(parts[6]) : 0;
+        const marker = (parts[7] || "").toLowerCase().replace(/\./g, "");
+        if (marker === "pm" && hour < 12) hour += 12;
+        if (marker === "am" && hour === 12) hour = 0;
+        const day = dateOrder === "mdy" ? second : first;
+        const month = dateOrder === "mdy" ? first : second;
+        const date = new Date(year, month - 1, day, hour, minute, secondPart, 0);
+        if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+        return date;
+      }
+
+      function matchHeader(line) {
+        const patterns = [
+          /^\s*[\u200e\u200f\u202a-\u202e\ufeff]*(?:\[)?(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4}),?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?|am|pm)?(?:\])?\s+-\s+([\s\S]*)$/i,
+          /^\s*[\u200e\u200f\u202a-\u202e\ufeff]*\[(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4}),?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?|am|pm)?\]\s+([\s\S]*)$/i
+        ];
+        for (const re of patterns) {
+          const match = line.match(re);
+          if (match) return match;
+        }
+        return null;
+      }
+
+      function metricize(message) {
+        const text = message.text || "";
+        message.isMedia = /<\s*multimedia omitido\s*>|<\s*media omitted\s*>|imagen omitida|video omitido|audio omitido|sticker omitido|documento omitido|gif omitido|multimedia omitted/i.test(text);
+        message.isDeleted = /se elimino este mensaje|eliminaste este mensaje|this message was deleted|you deleted this message/i.test(text.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+        const words = text.replace(/<[^>]+>/g, " ").match(/[\p{L}\p{N}][\p{L}\p{N}_'\-]*/gu) || [];
+        message.words = words.length;
+        message.chars = Array.from(text).length;
+        return message;
+      }
+
+      function parseChat(text, dateOrder) {
+        const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+        const messages = [];
+        let systemLines = 0;
+        let invalidLines = 0;
+        let current = null;
+
+        for (const raw of lines) {
+          if (!raw.trim()) continue;
+          const match = matchHeader(raw);
+          if (match) {
+            const date = buildDate(match, dateOrder);
+            if (!date) {
+              invalidLines++;
+              if (current) {
+                current.text += "\n" + cleanInvisible(raw);
+                metricize(current);
+              }
+              continue;
+            }
+            const rest = cleanInvisible(match[8]);
+            const sep = rest.indexOf(": ");
+            if (sep <= 0) {
+              systemLines++;
+              current = null;
+              continue;
+            }
+            const sender = cleanInvisible(rest.slice(0, sep));
+            const body = rest.slice(sep + 2).trim();
+            if (!sender) {
+              systemLines++;
+              current = null;
+              continue;
+            }
+            current = metricize({
+              id: messages.length + 1,
+              date,
+              ts: date.getTime(),
+              sender,
+              text: body
+            });
+            messages.push(current);
+          } else if (current) {
+            current.text += "\n" + cleanInvisible(raw);
+            metricize(current);
+          } else {
+            invalidLines++;
+          }
+        }
+        messages.sort((a, b) => a.ts - b.ts);
+        return { messages, systemLines, invalidLines };
+      }
+
+      function dayKey(date) {
+        return toDateInputValue(date);
+      }
+
+      function monthKey(date) {
+        return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
+      }
+
+      function yearKey(date) {
+        return String(date.getFullYear());
+      }
+
+      function isoWeekInfo(date) {
+        const utc = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const day = utc.getUTCDay() || 7;
+        utc.setUTCDate(utc.getUTCDate() + 4 - day);
+        const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+        const week = Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
+        const weekYear = utc.getUTCFullYear();
+        const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const localDay = (start.getDay() + 6) % 7;
+        start.setDate(start.getDate() - localDay);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return { key: `${weekYear}-W${pad2(week)}`, week, weekYear, start, end };
+      }
+
+      function weekKey(date) {
+        return isoWeekInfo(date).key;
+      }
+
+      function periodKey(date, type) {
+        if (type === "day") return dayKey(date);
+        if (type === "week") return weekKey(date);
+        if (type === "month") return monthKey(date);
+        if (type === "year") return yearKey(date);
+        return "all";
+      }
+
+      function periodLabel(key, type, sampleDate) {
+        if (type === "day") return key.split("-").reverse().join("/");
+        if (type === "month") {
+          const [year, month] = key.split("-");
+          return `${monthNames[Number(month) - 1]} ${year}`;
+        }
+        if (type === "year") return key;
+        if (type === "week") {
+          const info = sampleDate ? isoWeekInfo(sampleDate) : null;
+          if (info) return `${info.weekYear} S${pad2(info.week)} (${formatDateShort(info.start)} - ${formatDateShort(info.end)})`;
+          return key;
+        }
+        return "Historico";
+      }
+
+      function aggregateBySender(messages) {
+        const map = new Map();
+        for (const msg of messages) {
+          const item = map.get(msg.sender) || {
+            sender: msg.sender,
+            messages: 0,
+            words: 0,
+            chars: 0,
+            media: 0,
+            deleted: 0,
+            first: msg.date,
+            last: msg.date
+          };
+          item.messages++;
+          item.words += msg.words || 0;
+          item.chars += msg.chars || 0;
+          item.media += msg.isMedia ? 1 : 0;
+          item.deleted += msg.isDeleted ? 1 : 0;
+          if (msg.ts < item.first.getTime()) item.first = msg.date;
+          if (msg.ts > item.last.getTime()) item.last = msg.date;
+          map.set(msg.sender, item);
+        }
+        return Array.from(map.values()).sort((a, b) => b.messages - a.messages || a.sender.localeCompare(b.sender));
+      }
+
+      function aggregateByPeriod(messages, type) {
+        const map = new Map();
+        for (const msg of messages) {
+          const key = periodKey(msg.date, type);
+          const item = map.get(key) || { key, label: periodLabel(key, type, msg.date), count: 0, sampleDate: msg.date };
+          item.count++;
+          map.set(key, item);
+        }
+        return Array.from(map.values()).sort((a, b) => a.key.localeCompare(b.key));
+      }
+
+      function normalizeForStats(text) {
+        return cleanInvisible(text)
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/https?:\/\/\S+|www\.\S+/g, " ")
+          .replace(/<\s*(multimedia omitido|media omitted)\s*>/g, " ")
+          .replace(/\b(imagen|video|audio|sticker|documento|gif)\s+omitid[oa]\b/g, " ")
+          .replace(/\b(se elimino este mensaje|eliminaste este mensaje|this message was deleted|you deleted this message)\b/g, " ");
+      }
+
+      function tokenizeForStats(text, removeStops = true) {
+        const tokens = normalizeForStats(text).match(/[\p{L}\p{N}]+(?:['_-][\p{L}\p{N}]+)*/gu) || [];
+        return tokens.filter(token => {
+          if (token.length < 3) return false;
+          if (/^\d+$/.test(token)) return false;
+          if (removeStops && STOP_WORDS.has(token)) return false;
+          return true;
+        });
+      }
+
+      function tokenizeForPhrases(text) {
+        const tokens = normalizeForStats(text).match(/[\p{L}\p{N}]+(?:['_-][\p{L}\p{N}]+)*/gu) || [];
+        return tokens.filter(token => token.length >= 2 && !/^\d+$/.test(token));
+      }
+
+      function incrementMap(map, key, amount = 1) {
+        map.set(key, (map.get(key) || 0) + amount);
+      }
+
+      function topWordItems(messages, limit = 10) {
+        const counts = new Map();
+        let total = 0;
+        for (const msg of messages) {
+          for (const token of tokenizeForStats(msg.text, true)) {
+            incrementMap(counts, token);
+            total++;
+          }
+        }
+        return Array.from(counts.entries())
+          .map(([label, count]) => ({ label, count, meta: `${formatPercent(total ? count * 100 / total : 0)} de las palabras utiles` }))
+          .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+          .slice(0, limit);
+      }
+
+      function phraseQuality(tokens) {
+        const meaningful = tokens.filter(token => !STOP_WORDS.has(token) && token.length >= 4);
+        if (meaningful.length >= 2) return true;
+        if (meaningful.length >= 1 && tokens.length >= 3) return true;
+        return false;
+      }
+
+      function topPhraseItems(messages, limit = 10) {
+        const counts = new Map();
+        const lengths = new Map();
+        for (const msg of messages) {
+          const tokens = tokenizeForPhrases(msg.text);
+          for (let size = 2; size <= 4; size++) {
+            if (tokens.length < size) continue;
+            for (let i = 0; i <= tokens.length - size; i++) {
+              const chunk = tokens.slice(i, i + size);
+              if (!phraseQuality(chunk)) continue;
+              const phrase = chunk.join(" ");
+              incrementMap(counts, phrase);
+              lengths.set(phrase, size);
+            }
+          }
+        }
+        return Array.from(counts.entries())
+          .filter(([, count]) => count > 1)
+          .map(([label, count]) => ({ label, count, type: "frase", meta: `${lengths.get(label)} palabras repetidas` }))
+          .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+          .slice(0, limit);
+      }
+
+      function topInsultItems(messages) {
+        const counts = new Map();
+        for (const msg of messages) {
+          const text = normalizeForStats(msg.text);
+          for (const item of INSULT_PATTERNS) {
+            const matches = text.match(item.re);
+            if (matches && matches.length) incrementMap(counts, item.label, matches.length);
+          }
+        }
+        return Array.from(counts.entries())
+          .map(([label, count]) => ({ label, count, type: "insulto", meta: "insulto detectado" }))
+          .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+      }
+
+      function topPhraseAndInsultItems(messages, limit = 10) {
+        const combined = topInsultItems(messages).concat(topPhraseItems(messages, limit * 2));
+        const merged = new Map();
+        for (const item of combined) {
+          const previous = merged.get(item.label);
+          if (!previous || item.count > previous.count) merged.set(item.label, item);
+        }
+        return Array.from(merged.values())
+          .sort((a, b) => b.count - a.count || (a.type || "").localeCompare(b.type || "") || a.label.localeCompare(b.label))
+          .slice(0, limit);
+      }
+
+      function renderStatList(container, items, emptyText) {
+        if (!items.length) {
+          container.innerHTML = `<div class="empty">${escapeHtml(emptyText)}</div>`;
+          return;
+        }
+        container.innerHTML = `<div class="stat-list">` + items.map((item, index) => {
+          const pill = item.type ? `<span class="pill">${escapeHtml(item.type)}</span>` : "";
+          return `<div class="stat-row">
+            <div class="stat-rank">${index + 1}</div>
+            <div class="stat-main">
+              <div class="stat-label" title="${escapeAttr(item.label)}">${escapeHtml(item.label)}</div>
+              <div class="stat-meta">${pill}${escapeHtml(item.meta || "")}</div>
+            </div>
+            <div class="stat-count">${formatNumber(item.count)}</div>
+          </div>`;
+        }).join("") + `</div>`;
+      }
+
+      function sumCounts(map) {
+        let total = 0;
+        for (const count of map.values()) total += count;
+        return total;
+      }
+
+      function wordCountMap(messages) {
+        const counts = new Map();
+        for (const msg of messages) {
+          for (const token of tokenizeForStats(msg.text, true)) incrementMap(counts, token);
+        }
+        return counts;
+      }
+
+      function authorCountForTerm(messages, term) {
+        const authors = new Set();
+        const needle = new RegExp(`(^|\\s)${escapeRegExp(term)}($|\\s)`, "i");
+        for (const msg of messages) {
+          const normalized = normalizeForStats(msg.text).replace(/[^\p{L}\p{N}_'-]+/gu, " ");
+          if (needle.test(normalized)) authors.add(msg.sender);
+        }
+        return authors.size;
+      }
+
+      function escapeRegExp(value) {
+        return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      function hotTopicItems(weekMessages, referenceMessages, limit = 10) {
+        const weekCounts = wordCountMap(weekMessages);
+        const refCounts = wordCountMap(referenceMessages);
+        const weekTotal = Math.max(sumCounts(weekCounts), 1);
+        const refTotal = Math.max(sumCounts(refCounts), 1);
+        const minCount = weekMessages.length >= 80 ? 3 : 2;
+        return Array.from(weekCounts.entries())
+          .filter(([, count]) => count >= minCount)
+          .map(([label, count]) => {
+            const weekRate = count / weekTotal;
+            const refRate = Math.max((refCounts.get(label) || 0) / refTotal, 1 / refTotal);
+            const lift = weekRate / refRate;
+            const score = count * Math.log2(1 + lift);
+            return { label, count, lift, score, authors: authorCountForTerm(weekMessages, label) };
+          })
+          .sort((a, b) => b.score - a.score || b.count - a.count || a.label.localeCompare(b.label))
+          .slice(0, limit);
+      }
+
+      function renderHotTopic() {
+        const key = refs.hotWeekSelect.value;
+        const person = refs.personFilter.value;
+        if (!key) {
+          refs.hotTopic.innerHTML = `<div class="empty">Cargá un chat para calcular el hot topic semanal.</div>`;
+          return;
+        }
+        const scopedMessages = state.messages.filter(msg => person === "all" || msg.sender === person);
+        const weekMessages = scopedMessages.filter(msg => periodKey(msg.date, "week") === key);
+        if (!weekMessages.length) {
+          refs.hotTopic.innerHTML = `<div class="empty">No hay mensajes en esa semana para el filtro actual.</div>`;
+          return;
+        }
+        const referenceMessages = scopedMessages.filter(msg => periodKey(msg.date, "week") !== key);
+        const items = hotTopicItems(weekMessages, referenceMessages.length ? referenceMessages : scopedMessages, 10);
+        const label = periodLabel(key, "week", weekMessages[0].date);
+        if (!items.length) {
+          refs.hotTopic.innerHTML = `<div class="empty">Hay mensajes en ${escapeHtml(label)}, pero no suficientes palabras distintivas.</div>`;
+          return;
+        }
+        const top = items[0];
+        refs.hotTopic.innerHTML = `<div class="topic-hero">
+          <div class="topic-winner">
+            <div class="label">Hot topic de ${escapeHtml(label)}</div>
+            <div class="word">${escapeHtml(top.label)}</div>
+            <div class="detail">${formatNumber(top.count)} menciones, ${formatNumber(top.authors)} autores y ${formatNumber(Math.round(top.lift * 10) / 10)}x de intensidad relativa.</div>
+          </div>
+          <div>
+            <div class="topic-tags">` + items.map(item => `<span class="topic-tag" title="${escapeAttr(formatNumber(item.count) + ' menciones')}">${escapeHtml(item.label)} <small>${formatNumber(item.count)}</small></span>`).join("") + `</div>
+          </div>
+        </div>`;
+      }
+
+      function applyFilters() {
+        const person = refs.personFilter.value;
+        const start = refs.dateFrom.value ? new Date(refs.dateFrom.value + "T00:00:00").getTime() : -Infinity;
+        const end = refs.dateTo.value ? new Date(refs.dateTo.value + "T23:59:59.999").getTime() : Infinity;
+        return state.messages.filter(msg => msg.ts >= start && msg.ts <= end && (person === "all" || msg.sender === person));
+      }
+
+      function buildPeriodSelectors() {
+        const periodTypes = ["week", "month", "year"];
+        for (const type of periodTypes) {
+          const seen = new Map();
+          for (const msg of state.messages) {
+            const key = periodKey(msg.date, type);
+            if (!seen.has(key)) seen.set(key, { key, label: periodLabel(key, type, msg.date), sampleDate: msg.date });
+          }
+          state.periods[type] = Array.from(seen.values()).sort((a, b) => a.key.localeCompare(b.key));
+        }
+        fillSelect(refs.weekSelect, state.periods.week);
+        fillSelect(refs.hotWeekSelect, state.periods.week);
+        fillSelect(refs.monthSelect, state.periods.month);
+        fillSelect(refs.yearSelect, state.periods.year);
+      }
+
+      function fillSelect(select, items) {
+        select.innerHTML = "";
+        for (const item of items) {
+          const option = document.createElement("option");
+          option.value = item.key;
+          option.textContent = item.label;
+          select.append(option);
+        }
+        if (items.length) select.value = items[items.length - 1].key;
+      }
+
+      function initFilters() {
+        const participants = aggregateBySender(state.messages).map(item => item.sender).sort((a, b) => a.localeCompare(b));
+        refs.personFilter.innerHTML = `<option value="all">Todos</option>` + participants.map(name => `<option value="${escapeAttr(name)}">${escapeHtml(name)}</option>`).join("");
+        if (state.messages.length) {
+          refs.dateFrom.value = toDateInputValue(state.messages[0].date);
+          refs.dateTo.value = toDateInputValue(state.messages[state.messages.length - 1].date);
+          refs.dateFrom.min = refs.dateTo.min = toDateInputValue(state.messages[0].date);
+          refs.dateFrom.max = refs.dateTo.max = toDateInputValue(state.messages[state.messages.length - 1].date);
+        }
+        buildPeriodSelectors();
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char]));
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value).replace(/'/g, "&#39;");
+      }
+
+      function renderKpis(messages) {
+        const ranking = aggregateBySender(messages);
+        const activeDays = new Set(messages.map(msg => dayKey(msg.date))).size;
+        const media = messages.reduce((sum, msg) => sum + (msg.isMedia ? 1 : 0), 0);
+        const words = messages.reduce((sum, msg) => sum + (msg.words || 0), 0);
+        const first = messages[0]?.date;
+        const last = messages[messages.length - 1]?.date;
+        const top = ranking[0];
+        const kpis = [
+          { label: "Mensajes", value: formatNumber(messages.length), sub: first && last ? `${formatDateShort(first)} a ${formatDateShort(last)}` : "Sin datos" },
+          { label: "Participantes", value: formatNumber(ranking.length), sub: top ? `Lidera: ${top.sender}` : "-" },
+          { label: "Multimedia", value: formatNumber(media), sub: formatPercent(messages.length ? media * 100 / messages.length : 0) + " del total" },
+          { label: "Palabras", value: formatNumber(words), sub: messages.length ? formatNumber(Math.round(words / messages.length)) + " por mensaje" : "-" },
+          { label: "Dias activos", value: formatNumber(activeDays), sub: activeDays ? formatNumber(Math.round(messages.length / activeDays)) + " mensajes/dia" : "-" },
+          { label: "Top persona", value: top ? formatNumber(top.messages) : "0", sub: top ? top.sender : "-" }
+        ];
+        refs.kpiGrid.innerHTML = kpis.map(kpi => `
+          <article class="kpi">
+            <div class="label">${escapeHtml(kpi.label)}</div>
+            <div class="value">${escapeHtml(kpi.value)}</div>
+            <div class="sub" title="${escapeAttr(kpi.sub)}">${escapeHtml(kpi.sub)}</div>
+          </article>
+        `).join("");
+      }
+
+      function renderPersonChart(messages) {
+        const data = aggregateBySender(messages);
+        const limit = refs.topLimit.value === "all" ? data.length : Number(refs.topLimit.value);
+        const sliced = data.slice(0, limit);
+        if (!sliced.length) {
+          refs.personChart.innerHTML = `<div class="empty">No hay mensajes para estos filtros.</div>`;
+          return;
+        }
+        const max = sliced[0].messages || 1;
+        refs.personChart.innerHTML = `<div class="bar-list">` + sliced.map(item => {
+          const pct = Math.max(2, item.messages * 100 / max);
+          return `<div class="bar-row">
+            <div class="bar-name" title="${escapeAttr(item.sender)}">${escapeHtml(item.sender)}</div>
+            <div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div>
+            <div class="bar-val">${formatNumber(item.messages)}</div>
+          </div>`;
+        }).join("") + `</div>`;
+      }
+
+      function renderTimeline(messages) {
+        const type = refs.groupBy.value;
+        const data = aggregateByPeriod(messages, type);
+        if (!data.length) {
+          refs.timelineChart.innerHTML = `<div class="empty">No hay datos en el periodo elegido.</div>`;
+          return;
+        }
+        const max = Math.max(...data.map(item => item.count), 1);
+        const labelEvery = Math.max(1, Math.ceil(data.length / 14));
+        refs.timelineChart.innerHTML = `<div class="timeline-wrap"><div class="timeline" style="min-width:${Math.max(360, data.length * 24)}px">` + data.map((item, index) => {
+          const height = Math.max(2, item.count * 100 / max);
+          const label = index % labelEvery === 0 || index === data.length - 1 ? `<div class="time-label">${escapeHtml(item.label)}</div>` : "";
+          return `<div class="time-item" title="${escapeAttr(item.label + ': ' + formatNumber(item.count) + ' mensajes')}">
+            <div class="time-bar" style="height:${height}%"></div>${label}
+          </div>`;
+        }).join("") + `</div></div>`;
+      }
+
+      function renderHeatmap(messages) {
+        if (!messages.length) {
+          refs.heatmap.innerHTML = `<div class="empty">No hay mensajes para armar el mapa.</div>`;
+          return;
+        }
+        const matrix = Array.from({ length: 7 }, () => Array(24).fill(0));
+        for (const msg of messages) matrix[msg.date.getDay()][msg.date.getHours()]++;
+        const max = Math.max(...matrix.flat(), 1);
+        let html = `<div class="heatmap"><div></div>`;
+        for (let hour = 0; hour < 24; hour++) html += `<div class="hour-label">${hour}</div>`;
+        for (let day = 1; day <= 7; day++) {
+          const actualDay = day % 7;
+          html += `<div class="heat-label">${dayNames[actualDay]}</div>`;
+          for (let hour = 0; hour < 24; hour++) {
+            const count = matrix[actualDay][hour];
+            const alpha = count ? (0.12 + (count / max) * 0.78).toFixed(3) : "0.045";
+            html += `<div class="heat-cell" style="--alpha:${alpha}" title="${dayNames[actualDay]} ${hour}:00 - ${formatNumber(count)} mensajes"></div>`;
+          }
+        }
+        html += `</div>`;
+        refs.heatmap.innerHTML = html;
+      }
+
+      function renderRanking(messages) {
+        const rows = aggregateBySender(messages);
+        const total = messages.length || 1;
+        const limit = refs.topLimit.value === "all" ? rows.length : Number(refs.topLimit.value);
+        const sliced = rows.slice(0, limit);
+        if (!sliced.length) {
+          refs.rankingTable.innerHTML = `<div class="empty">No hay ranking para estos filtros.</div>`;
+          return;
+        }
+        refs.rankingTable.innerHTML = `<div class="table-wrap"><table>
+          <thead><tr>
+            <th>#</th><th>Persona</th><th class="num">Mensajes</th><th class="num">Share</th><th class="num">Palabras</th><th class="num">Multimedia</th><th class="num">Prom. chars</th><th>Primer msg</th><th>Ultimo msg</th>
+          </tr></thead><tbody>` + sliced.map((item, index) => {
+            const avgChars = item.messages ? Math.round(item.chars / item.messages) : 0;
+            return `<tr>
+              <td class="num">${index + 1}</td>
+              <td><strong>${escapeHtml(item.sender)}</strong></td>
+              <td class="num">${formatNumber(item.messages)}</td>
+              <td class="num">${formatPercent(item.messages * 100 / total)}</td>
+              <td class="num">${formatNumber(item.words)}</td>
+              <td class="num">${formatNumber(item.media)}</td>
+              <td class="num">${formatNumber(avgChars)}</td>
+              <td>${formatDateShort(item.first)}</td>
+              <td>${formatDateShort(item.last)}</td>
+            </tr>`;
+          }).join("") + `</tbody></table></div>`;
+      }
+
+      function topFor(type, key) {
+        let data;
+        if (type === "all") data = state.messages;
+        else data = state.messages.filter(msg => periodKey(msg.date, type) === key);
+        const ranking = aggregateBySender(data);
+        const top = ranking[0];
+        if (!top) return null;
+        return { top, total: data.length, runner: ranking[1] || null };
+      }
+
+      function renderTopCard(card, result) {
+        const name = $('[data-role="name"]', card);
+        const count = $('[data-role="count"]', card);
+        const sub = $('[data-role="sub"]', card);
+        const bar = $(".progress span", card);
+        if (!result) {
+          name.textContent = "Sin datos";
+          count.textContent = "0 mensajes";
+          sub.textContent = "";
+          bar.style.width = "0%";
+          return;
+        }
+        const share = result.total ? result.top.messages * 100 / result.total : 0;
+        name.textContent = result.top.sender;
+        count.textContent = `${formatNumber(result.top.messages)} mensajes (${formatPercent(share)})`;
+        sub.textContent = result.runner ? `Segundo: ${result.runner.sender} con ${formatNumber(result.runner.messages)}` : "Sin segundo puesto.";
+        bar.style.width = `${Math.max(3, share)}%`;
+      }
+
+      function renderTopCards() {
+        renderTopCard(refs.topWeekCard, topFor("week", refs.weekSelect.value));
+        renderTopCard(refs.topMonthCard, topFor("month", refs.monthSelect.value));
+        renderTopCard(refs.topYearCard, topFor("year", refs.yearSelect.value));
+        renderTopCard(refs.topHistoryCard, topFor("all"));
+      }
+
+      function renderAll() {
+        if (!state.messages.length) return;
+        const filtered = applyFilters();
+        renderKpis(filtered);
+        renderPersonChart(filtered);
+        renderTimeline(filtered);
+        renderHeatmap(filtered);
+        renderRanking(filtered);
+        renderHotTopic();
+        renderTopCards();
+        refs.fileSummary.textContent = `${state.fileName} | TXT: ${state.textFileName} | ${formatNumber(state.messages.length)} mensajes parseados | ${formatNumber(state.systemLines)} eventos del sistema ignorados | formato detectado: ${state.inferredOrder.toUpperCase()}`;
+      }
+
+      function resetFilters() {
+        refs.personFilter.value = "all";
+        if (state.messages.length) {
+          refs.dateFrom.value = toDateInputValue(state.messages[0].date);
+          refs.dateTo.value = toDateInputValue(state.messages[state.messages.length - 1].date);
+        }
+        refs.groupBy.value = "week";
+        refs.topLimit.value = "20";
+        if (state.periods.week.length) refs.hotWeekSelect.value = state.periods.week[state.periods.week.length - 1].key;
+        renderAll();
+      }
+
+      function exportCsv() {
+        const rows = aggregateBySender(applyFilters());
+        if (!rows.length) return;
+        const header = ["ranking", "persona", "mensajes", "share", "palabras", "multimedia", "mensajes_eliminados", "promedio_caracteres", "primer_mensaje", "ultimo_mensaje"];
+        const total = rows.reduce((sum, row) => sum + row.messages, 0) || 1;
+        const csvRows = [header].concat(rows.map((row, index) => [
+          index + 1,
+          row.sender,
+          row.messages,
+          (row.messages / total).toFixed(6),
+          row.words,
+          row.media,
+          row.deleted,
+          row.messages ? Math.round(row.chars / row.messages) : 0,
+          toDateInputValue(row.first),
+          toDateInputValue(row.last)
+        ]));
+        const csv = csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "ranking_tablero_de_deslomados.csv";
+        document.body.append(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      async function handleFile(file) {
+        if (!file) return;
+        try {
+          refs.dashboard.classList.add("hidden");
+          showStatus("Leyendo archivo...", "");
+          const { text, textFileName } = await readUploadedFile(file);
+          showStatus("Analizando mensajes...", "");
+          const selectedOrder = refs.dateFormat.value === "auto" ? inferDateOrder(text) : refs.dateFormat.value;
+          const result = parseChat(text, selectedOrder);
+          if (!result.messages.length) {
+            throw new Error("No pude detectar mensajes. Revisa el formato de fecha o proba subir el .txt exportado por WhatsApp.");
+          }
+          state.messages = result.messages;
+          state.systemLines = result.systemLines;
+          state.invalidLines = result.invalidLines;
+          state.fileName = file.name || "archivo";
+          state.textFileName = textFileName || file.name || "chat.txt";
+          state.inferredOrder = selectedOrder;
+          initFilters();
+          refs.dashboard.classList.remove("hidden");
+          renderAll();
+          showStatus(`Listo: ${formatNumber(state.messages.length)} mensajes cargados de ${formatNumber(aggregateBySender(state.messages).length)} personas.`, "ok");
+        } catch (error) {
+          console.error(error);
+          showStatus(error.message || "No pude procesar el archivo.", "err");
+        }
+      }
+
+      refs.fileInput.addEventListener("change", event => handleFile(event.target.files[0]));
+      refs.dropZone.addEventListener("dragover", event => { event.preventDefault(); refs.dropZone.classList.add("is-over"); });
+      refs.dropZone.addEventListener("dragleave", () => refs.dropZone.classList.remove("is-over"));
+      refs.dropZone.addEventListener("drop", event => {
+        event.preventDefault();
+        refs.dropZone.classList.remove("is-over");
+        const file = event.dataTransfer.files[0];
+        refs.fileInput.files = event.dataTransfer.files;
+        handleFile(file);
+      });
+
+      [refs.personFilter, refs.dateFrom, refs.dateTo, refs.groupBy, refs.topLimit].forEach(control => control.addEventListener("change", renderAll));
+      [refs.weekSelect, refs.monthSelect, refs.yearSelect].forEach(control => control.addEventListener("change", renderTopCards));
+      refs.hotWeekSelect.addEventListener("change", renderHotTopic);
+      refs.resetFilters.addEventListener("click", resetFilters);
+      refs.exportCsv.addEventListener("click", exportCsv);
+      refs.dateFormat.addEventListener("change", () => {
+        if (refs.fileInput.files[0]) handleFile(refs.fileInput.files[0]);
+      });
+
+      hideStatus();
+    })();
+  </script>
+</body>
+</html>
