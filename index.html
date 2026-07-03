@@ -254,11 +254,18 @@
       display: flex;
       flex-direction: column;
       gap: 0;
-      padding: 10px 16px;
-      position: sticky;
-      top: 12px;
-      z-index: 20;
+      padding: 8px 24px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      border-radius: 0;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      background: rgba(9, 13, 20, .96);
       backdrop-filter: blur(20px);
+      box-shadow: 0 2px 24px rgba(0, 0, 0, .4);
     }
 
     .controls-head {
@@ -359,8 +366,9 @@
 
     button:hover { transform: translateY(-1px); }
 
-    /* Botones dentro de los filtros: compactos y sin flex stretch */
+    /* Botones dentro de los filtros: compactos, width auto para no heredar 100% global */
     .controls button, .controls-actions button {
+      width: auto;
       flex: 0 0 auto;
       min-height: 32px;
       padding: 5px 14px;
@@ -394,9 +402,9 @@
 
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(6, minmax(150px, 1fr));
-      gap: 14px;
-      margin-top: 18px;
+      grid-template-columns: repeat(6, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
     }
 
     .kpi {
@@ -445,44 +453,57 @@
 
     .top-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(210px, 1fr));
-      gap: 14px;
-      margin-top: 18px;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
     }
 
     .top-card {
-      min-height: 190px;
-      padding: 18px;
+      min-height: 130px;
+      padding: 12px 14px;
       border: 1px solid var(--border);
-      border-radius: 22px;
+      border-radius: 18px;
       background: linear-gradient(180deg, rgba(157, 248, 113, .10), rgba(255, 255, 255, .045));
     }
 
     .top-card h3 {
-      margin: 0 0 12px;
+      margin: 0 0 6px;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 10px;
       text-transform: uppercase;
       letter-spacing: .08em;
     }
 
+    .top-card select {
+      font-size: 11px;
+      padding: 3px 6px;
+      min-height: 24px;
+      border-radius: 7px;
+    }
+
     .top-card .champion {
-      margin-top: 14px;
-      font-size: clamp(23px, 2.4vw, 34px);
+      margin-top: 8px;
+      font-size: clamp(16px, 1.6vw, 22px);
       font-weight: 950;
       letter-spacing: -.055em;
       word-break: break-word;
     }
 
     .top-card .champion-count {
-      margin-top: 8px;
+      margin-top: 4px;
       color: var(--accent);
       font-weight: 900;
+      font-size: 12px;
+    }
+
+    .top-card .help {
+      margin-top: 3px;
+      font-size: 11px;
     }
 
     .progress {
-      height: 9px;
-      margin-top: 12px;
+      height: 6px;
+      margin-top: 8px;
       overflow: hidden;
       border-radius: 999px;
       background: rgba(255, 255, 255, .10);
@@ -2332,6 +2353,7 @@
           refs.heroSection.classList.add("hidden");
           refs.dashboard.classList.remove("hidden");
           renderAll();
+          requestAnimationFrame(syncDashboardPadding);
           showStatus(`Listo: ${formatNumber(state.messages.length)} mensajes cargados de ${formatNumber(aggregateBySender(state.messages).length)} personas.`, "ok");
         } catch (error) {
           console.error(error);
@@ -2342,9 +2364,17 @@
       refs.fileInput.addEventListener("change", event => handleFile(event.target.files[0]));
       refs.fileInputAlt.addEventListener("change", event => handleFile(event.target.files[0]));
       refs.changeFileBtn.addEventListener("click", () => refs.fileInputAlt.click());
+      function syncDashboardPadding() {
+        // Empuja el contenido del dashboard para que no quede tapado por la barra fija
+        const h = refs.controlsPanel.getBoundingClientRect().height;
+        refs.dashboard.style.paddingTop = (h + 12) + "px";
+      }
+
       refs.toggleFilters.addEventListener("click", () => {
         const collapsed = refs.controlsPanel.classList.toggle("collapsed");
         refs.toggleArrow.textContent = collapsed ? "▸" : "▾";
+        // Dar tiempo a la transicion antes de recalcular
+        setTimeout(syncDashboardPadding, 270);
       });
       refs.dropZone.addEventListener("dragover", event => { event.preventDefault(); refs.dropZone.classList.add("is-over"); });
       refs.dropZone.addEventListener("dragleave", () => refs.dropZone.classList.remove("is-over"));
