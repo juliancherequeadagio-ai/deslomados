@@ -2666,21 +2666,6 @@
           records.push({ emoji: "📚", label: "Vocabulario mas rico", color: "accent-3", value: `${formatNumber(vocabTop.n)} palabras unicas`, detail: `${vocabTop.sender} es quien mas vocabulario distinto uso en el grupo.` });
         }
 
-        // El monólogo más largo: racha consecutiva de mensajes del mismo sender
-        let bestStreak = 0, bestSender = "", bestDate = null;
-        let curSender = "", curCount = 0, curDate = null;
-        for (const msg of messages) {
-          if (msg.sender === curSender) {
-            curCount++;
-          } else {
-            if (curCount > bestStreak) { bestStreak = curCount; bestSender = curSender; bestDate = curDate; }
-            curSender = msg.sender; curCount = 1; curDate = msg.date;
-          }
-        }
-        if (curCount > bestStreak) { bestStreak = curCount; bestSender = curSender; bestDate = curDate; }
-        if (bestSender && bestStreak >= 3) {
-          records.push({ emoji: "🎤", label: "El monologo mas largo", color: "danger", value: `${bestStreak} msgs seguidos`, detail: `${bestSender} hablo solo por ${bestStreak} mensajes consecutivos el ${formatDateShort(bestDate)}.` });
-        }
 
         // El finde warrior: más mensajes los sábados y domingos
         const findeMap = new Map();
@@ -2707,10 +2692,6 @@
         if (avgChars.length >= 1) {
           const breve = avgChars[0];
           records.push({ emoji: "📱", label: "El mas breve", color: "accent-3", value: `${breve.avg.toFixed(0)} chars por msg`, detail: `${breve.sender} dice lo que tiene que decir en pocas letras.` });
-        }
-        if (avgChars.length >= 2) {
-          const verbo = avgChars[avgChars.length - 1];
-          records.push({ emoji: "📖", label: "El mas verborragico", color: "accent-3", value: `${verbo.avg.toFixed(0)} chars por msg`, detail: `${verbo.sender} no puede escribir menos de un parrafo.` });
         }
 
         // El más nombrado: cuyo primer nombre aparece más en mensajes ajenos
