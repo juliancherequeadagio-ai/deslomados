@@ -689,57 +689,56 @@
     .hot-topic-controls select { flex: 1; min-width: 130px; }
 
     .topic-hero {
-      display: grid;
-      grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr);
-      gap: 16px;
-      align-items: stretch;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .topic-winner {
-      min-height: 180px;
-      padding: 20px;
+      padding: 12px 14px;
       border: 1px solid rgba(157, 248, 113, .22);
-      border-radius: 22px;
+      border-radius: 16px;
       background: linear-gradient(135deg, rgba(157, 248, 113, .14), rgba(94, 234, 212, .07));
     }
 
     .topic-winner .label {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 900;
       letter-spacing: .08em;
       text-transform: uppercase;
     }
 
     .topic-winner .word {
-      margin-top: 12px;
-      font-size: clamp(34px, 5vw, 62px);
-      line-height: .92;
+      margin-top: 6px;
+      font-size: clamp(22px, 3.5vw, 38px);
+      line-height: .95;
       font-weight: 950;
-      letter-spacing: -.07em;
+      letter-spacing: -.05em;
       word-break: break-word;
     }
 
     .topic-winner .detail {
-      margin-top: 14px;
+      margin-top: 8px;
       color: var(--muted);
-      line-height: 1.45;
+      line-height: 1.4;
+      font-size: 12px;
     }
 
     .topic-tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 9px;
+      gap: 6px;
       align-content: start;
     }
 
     .topic-tag {
-      padding: 9px 11px;
+      padding: 5px 9px;
       border: 1px solid rgba(255, 255, 255, .10);
       border-radius: 999px;
       background: rgba(255, 255, 255, .06);
       color: var(--text);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
     }
 
@@ -959,7 +958,7 @@
     /* ── Records + Hot Topic lado a lado ────────────────────────────── */
     .records-hot-grid {
       display: grid;
-      grid-template-columns: 1fr 280px;
+      grid-template-columns: 1fr 210px;
       gap: 18px;
       margin-top: 18px;
     }
@@ -967,14 +966,14 @@
     /* ── Récords históricos ──────────────────────────────────────────── */
     .records-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 12px;
-      margin-top: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
     }
 
     .record-card {
-      padding: 20px;
-      border-radius: 20px;
+      padding: 14px 16px;
+      border-radius: 16px;
     }
 
     .record-card.accent   { border: 1px solid rgba(157,248,113,.22); background: linear-gradient(135deg, rgba(157,248,113,.10), rgba(255,255,255,.04)); }
@@ -982,7 +981,7 @@
     .record-card.accent-3 { border: 1px solid rgba(248,214,109,.22); background: linear-gradient(135deg, rgba(248,214,109,.10), rgba(255,255,255,.04)); }
     .record-card.danger   { border: 1px solid rgba(255,107,139,.22); background: linear-gradient(135deg, rgba(255,107,139,.10), rgba(255,255,255,.04)); }
 
-    .record-emoji { font-size: 26px; margin-bottom: 10px; }
+    .record-emoji { font-size: 20px; margin-bottom: 6px; }
 
     .record-label {
       font-size: 11px;
