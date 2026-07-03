@@ -2733,6 +2733,25 @@
           records.push({ emoji: "📣", label: "El mas nombrado", color: "accent", value: `${formatNumber(nombrado[1])} menciones`, detail: `${nombrado[0]} es el nombre que mas aparece en los mensajes ajenos.` });
         }
 
+        // El año más activo
+        const yearMap = new Map();
+        for (const msg of messages) {
+          const y = msg.date.getFullYear();
+          yearMap.set(y, (yearMap.get(y) || 0) + 1);
+        }
+        const bestYear = Array.from(yearMap.entries()).sort((a, b) => b[1] - a[1])[0];
+        if (bestYear) {
+          records.push({ emoji: "📅", label: "El año mas activo", color: "accent", value: `${bestYear[0]}`, detail: `${formatNumber(bestYear[1])} mensajes en ${bestYear[0]}, el año mas activo del grupo.` });
+        }
+
+        // Veces que le dijeron al Braka que pida perdón
+        const brakaRe = /braka/i;
+        const perdonRe = /perd[oó]n/i;
+        const brakaPerdon = messages.filter(m => brakaRe.test(m.text) && perdonRe.test(m.text)).length;
+        if (brakaPerdon > 0) {
+          records.push({ emoji: "🙏", label: "Pedi perdon, Braka", color: "danger", value: `${formatNumber(brakaPerdon)} veces`, detail: `${brakaPerdon === 1 ? "Una vez le pidieron" : `${formatNumber(brakaPerdon)} veces le pidieron`} al Braka que pida perdon.` });
+        }
+
         refs.recordsGrid.innerHTML = records.map(r => `
           <article class="record-card ${escapeAttr(r.color)}">
             <div class="record-emoji">${r.emoji}</div>
