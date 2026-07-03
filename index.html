@@ -302,7 +302,7 @@
       align-items: flex-end;
       gap: 8px 10px;
       padding-top: 10px;
-      overflow: hidden;
+      overflow: visible;        /* permite que el dropdown flote fuera */
       transition: max-height .25s ease, opacity .2s ease, padding-top .25s ease;
       max-height: 500px;
       opacity: 1;
@@ -310,6 +310,7 @@
 
     .controls.collapsed .controls-body {
       max-height: 0;
+      overflow: hidden;         /* recorta al colapsar */
       opacity: 0;
       padding-top: 0;
       pointer-events: none;
@@ -2584,6 +2585,22 @@
         const vocabTop = Array.from(vocabMap.entries()).map(([s, w]) => ({ sender: s, n: w.size })).sort((a, b) => b.n - a.n)[0];
         if (vocabTop) {
           records.push({ emoji: "📚", label: "Vocabulario mas rico", color: "accent-3", value: `${formatNumber(vocabTop.n)} palabras unicas`, detail: `${vocabTop.sender} es quien mas vocabulario distinto uso en el grupo.` });
+        }
+
+        // El monólogo más largo: racha consecutiva de mensajes del mismo sender
+        let bestStreak = 0, bestSender = "", bestDate = null;
+        let curSender = "", curCount = 0, curDate = null;
+        for (const msg of messages) {
+          if (msg.sender === curSender) {
+            curCount++;
+          } else {
+            if (curCount > bestStreak) { bestStreak = curCount; bestSender = curSender; bestDate = curDate; }
+            curSender = msg.sender; curCount = 1; curDate = msg.date;
+          }
+        }
+        if (curCount > bestStreak) { bestStreak = curCount; bestSender = curSender; bestDate = curDate; }
+        if (bestSender && bestStreak >= 3) {
+          records.push({ emoji: "🎤", label: "El monologo mas largo", color: "danger", value: `${bestStreak} msgs seguidos`, detail: `${bestSender} hablo solo por ${bestStreak} mensajes consecutivos el ${formatDateShort(bestDate)}.` });
         }
 
         refs.recordsGrid.innerHTML = records.map(r => `
