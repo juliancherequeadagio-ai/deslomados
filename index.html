@@ -304,7 +304,7 @@
       padding-top: 10px;
       overflow: hidden;
       transition: max-height .25s ease, opacity .2s ease, padding-top .25s ease;
-      max-height: 200px;
+      max-height: 300px;
       opacity: 1;
     }
 
@@ -1078,21 +1078,91 @@
     }
 
     /* ── Multi-select personas ───────────────────────────────────────── */
-    /* Multi-select de participantes */
-    #peopleSelect {
-      min-width: 150px;
-      max-width: 220px;
-      height: auto;
-      background: rgba(255,255,255,.05);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 12px;
-      padding: 3px 6px;
-      accent-color: var(--accent);
+    /* ── Selector de participantes ───────────────────────────────────── */
+    .people-filter-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 180px;
+      max-width: 340px;
     }
 
-    #peopleSelect option { padding: 3px 4px; }
+    .people-filter-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .people-filter-label {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .people-filter-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .people-filter-actions button {
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255,255,255,.07);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      width: auto;
+    }
+
+    .people-filter-actions button:hover { background: rgba(255,255,255,.14); color: var(--text); }
+
+    .people-check-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      max-width: 340px;
+    }
+
+    .pcb-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      cursor: pointer;
+      user-select: none;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      transition: background .12s, border-color .12s;
+      white-space: nowrap;
+    }
+
+    .pcb-item:hover { background: rgba(255,255,255,.10); }
+
+    .pcb-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 13px;
+      height: 13px;
+      min-height: auto;
+      padding: 0;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* Chip apagado cuando está desmarcado */
+    .pcb-item:has(input:not(:checked)) {
+      opacity: .4;
+      border-color: transparent;
+      background: rgba(255,255,255,.02);
+    }
 
     /* ── Firma léxica ────────────────────────────────────────────────── */
     .signature-grid {
@@ -1254,9 +1324,16 @@
           </div>
         </div>
         <div class="controls-body" id="controlsBody">
-          <label>Participantes
-            <select id="peopleSelect" multiple size="5"></select>
-          </label>
+          <div class="people-filter-block">
+            <div class="people-filter-head">
+              <span class="people-filter-label">Participantes</span>
+              <div class="people-filter-actions">
+                <button id="peopleAll" type="button">Todos</button>
+                <button id="peopleNone" type="button">Ninguno</button>
+              </div>
+            </div>
+            <div id="peopleCheckList" class="people-check-list"></div>
+          </div>
           <label>Desde
             <input id="dateFrom" type="date" />
           </label>
@@ -1468,7 +1545,9 @@
         changeFileBtn: $("#changeFileBtn"),
         status: $("#status"),
         dashboard: $("#dashboard"),
-        peopleSelect: $("#peopleSelect"),
+        peopleCheckList: $("#peopleCheckList"),
+        peopleAll: $("#peopleAll"),
+        peopleNone: $("#peopleNone"),
         dateFrom: $("#dateFrom"),
         dateTo: $("#dateTo"),
         groupBy: $("#groupBy"),
@@ -2117,20 +2196,20 @@
         if (items.length) select.value = items[items.length - 1].key;
       }
 
-      function initPeopleFilter(participants) {
-        state.excludedPeople = new Set();
-        refs.peopleSelect.innerHTML = participants.map(name =>
-          `<option value="${escapeAttr(name)}" selected>${escapeHtml(name)}</option>`
-        ).join("");
+      function readPeopleFilter() {
+        state.excludedPeople = new Set(
+          Array.from(refs.peopleCheckList.querySelectorAll("input:not(:checked)")).map(cb => cb.value)
+        );
       }
 
-      function readPeopleFilter() {
-        // Excluidos = opciones no seleccionadas
-        state.excludedPeople = new Set(
-          Array.from(refs.peopleSelect.options)
-            .filter(o => !o.selected)
-            .map(o => o.value)
-        );
+      function initPeopleFilter(participants) {
+        state.excludedPeople = new Set();
+        refs.peopleCheckList.innerHTML = participants.map(name => `
+          <label class="pcb-item">
+            <input type="checkbox" value="${escapeAttr(name)}" checked />
+            <span>${escapeHtml(name)}</span>
+          </label>`).join("");
+        refs.peopleCheckList.addEventListener("change", () => { readPeopleFilter(); renderAll(); });
       }
 
       function initFilters() {
@@ -2772,7 +2851,7 @@
 
       function resetFilters() {
         state.excludedPeople = new Set();
-        Array.from(refs.peopleSelect.options).forEach(o => o.selected = true);
+        refs.peopleCheckList.querySelectorAll("input").forEach(cb => cb.checked = true);
         if (state.messages.length) {
           refs.dateFrom.value = toDateInputValue(state.messages[0].date);
           refs.dateTo.value = toDateInputValue(state.messages[state.messages.length - 1].date);
@@ -2867,7 +2946,16 @@
         handleFile(file);
       });
 
-      refs.peopleSelect.addEventListener("change", () => { readPeopleFilter(); renderAll(); });
+      refs.peopleAll.addEventListener("click", () => {
+        refs.peopleCheckList.querySelectorAll("input").forEach(cb => cb.checked = true);
+        state.excludedPeople = new Set();
+        renderAll();
+      });
+      refs.peopleNone.addEventListener("click", () => {
+        refs.peopleCheckList.querySelectorAll("input").forEach(cb => cb.checked = false);
+        readPeopleFilter();
+        renderAll();
+      });
 
       [refs.dateFrom, refs.dateTo, refs.groupBy, refs.topLimit].forEach(control => control.addEventListener("change", renderAll));
       [refs.weekSelect, refs.monthSelect, refs.yearSelect].forEach(control => control.addEventListener("change", renderTopCards));
