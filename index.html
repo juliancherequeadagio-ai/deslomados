@@ -173,6 +173,50 @@
       line-height: 1.7;
     }
 
+    /* ── Loading overlay ─────────────────────────────────────────────── */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(9, 13, 20, .55);
+      backdrop-filter: blur(3px);
+    }
+
+    .loading-overlay.hidden { display: none; }
+
+    .loading-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 32px 40px;
+      background: rgba(20, 27, 40, .95);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    }
+
+    .loading-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(157, 248, 113, .2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #loadingMsg {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: .04em;
+    }
+
     .status {
       margin-top: 18px;
       min-height: 52px;
@@ -1145,6 +1189,9 @@
 
     .people-dropdown-actions button:hover { background: rgba(255,255,255,.14); color: var(--text); }
 
+    .people-apply-btn { background: var(--accent) !important; color: #000 !important; font-weight: 800 !important; }
+    .people-apply-btn:hover { background: var(--accent-2) !important; color: #000 !important; }
+
     .people-check-list {
       overflow-y: auto;
       padding: 8px;
@@ -1328,6 +1375,13 @@
       <div id="status" class="status"></div>
     </section>
 
+    <div id="loadingOverlay" class="loading-overlay hidden">
+      <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <span id="loadingMsg">Calculando...</span>
+      </div>
+    </div>
+
     <section id="dashboard" class="dashboard hidden">
       <div class="panel controls" id="controlsPanel" aria-label="Filtros del dashboard">
         <div class="controls-head">
@@ -1350,6 +1404,7 @@
               <div class="people-dropdown-actions">
                 <button id="peopleAll" type="button">Todos</button>
                 <button id="peopleNone" type="button">Ninguno</button>
+                <button id="peopleApply" type="button" class="people-apply-btn">Aplicar</button>
               </div>
               <div id="peopleCheckList" class="people-check-list"></div>
             </div>
@@ -1564,6 +1619,8 @@
         fileInputAlt: $("#fileInputAlt"),
         changeFileBtn: $("#changeFileBtn"),
         status: $("#status"),
+        loadingOverlay: $("#loadingOverlay"),
+        loadingMsg: $("#loadingMsg"),
         dashboard: $("#dashboard"),
         peopleDropdown: $("#peopleDropdown"),
         peopleDdBtn: $("#peopleDdBtn"),
@@ -1571,6 +1628,7 @@
         peopleCheckList: $("#peopleCheckList"),
         peopleAll: $("#peopleAll"),
         peopleNone: $("#peopleNone"),
+        peopleApply: $("#peopleApply"),
         dateFrom: $("#dateFrom"),
         dateTo: $("#dateTo"),
         groupBy: $("#groupBy"),
@@ -1646,6 +1704,21 @@
       function hideStatus() {
         refs.status.className = "status";
         refs.status.textContent = "";
+      }
+
+      function showLoading(msg = "Calculando...") {
+        refs.loadingMsg.textContent = msg;
+        refs.loadingOverlay.classList.remove("hidden");
+      }
+
+      function hideLoading() {
+        refs.loadingOverlay.classList.add("hidden");
+      }
+
+      // Ejecuta fn tras un frame para que el spinner sea visible antes del trabajo pesado
+      function withLoading(msg, fn) {
+        showLoading(msg);
+        requestAnimationFrame(() => setTimeout(() => { fn(); hideLoading(); }, 16));
       }
 
       function formatNumber(value) {
@@ -2247,7 +2320,7 @@
           </label>`;
         }).join("");
         updatePeopleCount();
-        refs.peopleCheckList.addEventListener("change", () => { readPeopleFilter(); renderAll(); });
+        refs.peopleCheckList.addEventListener("change", readPeopleFilter);
       }
 
       function initFilters() {
@@ -2421,7 +2494,7 @@
 
         for (const msg of messages) {
           if (!sd.has(msg.sender)) {
-            sd.set(msg.sender, { sender: msg.sender, total: 0, night: 0, questions: 0, words: 0, activeDays: new Set(), maxConsecutive: 0, groupStarter: 0, workHours: 0, mediaCount: 0 });
+            sd.set(msg.sender, { sender: msg.sender, total: 0, night: 0, questions: 0, words: 0, activeDays: new Set(), maxConsecutive: 0, groupStarter: 0, workHours: 0, mediaCount: 0, insultos: 0 });
           }
           const s = sd.get(msg.sender);
           s.total++;
@@ -2432,6 +2505,9 @@
           const dow = msg.date.getDay(), h = msg.date.getHours();
           if (dow >= 1 && dow <= 5 && h >= 9 && h < 18) s.workHours++;
           if (msg.isMedia) s.mediaCount++;
+          for (const w of msg.text.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, " ").split(/\s+/)) {
+            if (INSULTS.has(w)) s.insultos++;
+          }
         }
 
         // Racha máxima de mensajes consecutivos del mismo sender
@@ -2513,6 +2589,9 @@
         const multimediaPool = withAvg.filter(s => s.mediaCount >= 5);
         const multimedia = multimediaPool.length ? win(multimediaPool, "mediaRatio") : null;
         if (multimedia) results.push({ emoji: "📸", title: "El multimedia", name: multimedia.sender, stat: `${(multimedia.mediaRatio * 100).toFixed(0)}% de sus msgs son multimedia`, desc: "dice mas con imagenes que con palabras" });
+
+        const insultador = win(qualified, "insultos");
+        if (insultador && insultador.insultos >= 3) results.push({ emoji: "🤬", title: "El insultador", name: insultador.sender, stat: `${formatNumber(insultador.insultos)} insultos mandados`, desc: "no filtra lo que piensa" });
 
         return results;
       }
@@ -2603,6 +2682,57 @@
           records.push({ emoji: "🎤", label: "El monologo mas largo", color: "danger", value: `${bestStreak} msgs seguidos`, detail: `${bestSender} hablo solo por ${bestStreak} mensajes consecutivos el ${formatDateShort(bestDate)}.` });
         }
 
+        // El finde warrior: más mensajes los sábados y domingos
+        const findeMap = new Map();
+        for (const msg of messages) {
+          const dow = msg.date.getDay();
+          if (dow === 0 || dow === 6) findeMap.set(msg.sender, (findeMap.get(msg.sender) || 0) + 1);
+        }
+        const findeTop = Array.from(findeMap.entries()).sort((a, b) => b[1] - a[1])[0];
+        if (findeTop && findeTop[1] >= 5) {
+          records.push({ emoji: "🏖️", label: "El finde warrior", color: "accent-2", value: `${formatNumber(findeTop[1])} msgs`, detail: `${findeTop[0]} es el campeon del finde: mas mensajes los sabados y domingos.` });
+        }
+
+        // El más breve / El más verborrágico: promedio de caracteres por mensaje (excluye media)
+        const charSum = new Map(), charCnt = new Map();
+        for (const msg of messages) {
+          if (msg.isMedia) continue;
+          charSum.set(msg.sender, (charSum.get(msg.sender) || 0) + msg.text.length);
+          charCnt.set(msg.sender, (charCnt.get(msg.sender) || 0) + 1);
+        }
+        const avgChars = Array.from(charSum.entries())
+          .filter(([s]) => (charCnt.get(s) || 0) >= 20)
+          .map(([s, total]) => ({ sender: s, avg: total / charCnt.get(s) }))
+          .sort((a, b) => a.avg - b.avg);
+        if (avgChars.length >= 1) {
+          const breve = avgChars[0];
+          records.push({ emoji: "📱", label: "El mas breve", color: "accent-3", value: `${breve.avg.toFixed(0)} chars por msg`, detail: `${breve.sender} dice lo que tiene que decir en pocas letras.` });
+        }
+        if (avgChars.length >= 2) {
+          const verbo = avgChars[avgChars.length - 1];
+          records.push({ emoji: "📖", label: "El mas verborragico", color: "accent-3", value: `${verbo.avg.toFixed(0)} chars por msg`, detail: `${verbo.sender} no puede escribir menos de un parrafo.` });
+        }
+
+        // El más nombrado: cuyo primer nombre aparece más en mensajes ajenos
+        const allSenders = [...new Set(messages.map(m => m.sender))];
+        const firstNameRe = allSenders.map(s => {
+          const first = s.split(/[\s_\-]+/)[0].toLowerCase();
+          return first.length > 2 ? { sender: s, first, re: new RegExp(`\\b${first}\\b`, 'i') } : null;
+        }).filter(Boolean);
+        const mentionCount = new Map(allSenders.map(s => [s, 0]));
+        for (const msg of messages) {
+          const lt = msg.text.toLowerCase();
+          for (const { sender, first, re } of firstNameRe) {
+            if (sender !== msg.sender && lt.includes(first) && re.test(msg.text)) {
+              mentionCount.set(sender, mentionCount.get(sender) + 1);
+            }
+          }
+        }
+        const nombrado = Array.from(mentionCount.entries()).sort((a, b) => b[1] - a[1])[0];
+        if (nombrado && nombrado[1] >= 3) {
+          records.push({ emoji: "📣", label: "El mas nombrado", color: "accent", value: `${formatNumber(nombrado[1])} menciones`, detail: `${nombrado[0]} es el nombre que mas aparece en los mensajes ajenos.` });
+        }
+
         refs.recordsGrid.innerHTML = records.map(r => `
           <article class="record-card ${escapeAttr(r.color)}">
             <div class="record-emoji">${r.emoji}</div>
@@ -2685,6 +2815,7 @@
 
       // TF-IDF lift: devuelve las palabras más características de un sender vs el resto
       const SIG_EXCLUDE = new Set(["omitido", "multimedia", "imagen", "video", "audio", "archivo", "sticker", "eliminado"]);
+      const INSULTS = new Set(["boludo","boluda","pelotudo","pelotuda","forro","forra","hdp","mierda","tarado","tarada","gil","soreta","pajero","pajera","cagon","cagona","idiota","imbecil","estupido","estupida","inutil","caradura","mogolico","mogolica","pelotudes","boludeces","boludez","gilada"]);
       function signatureWords(senderMsgs, allMsgs, topN = 3) {
         const tokenize = text => text.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, " ").split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w) && !SIG_EXCLUDE.has(w));
         const tfMap = {};
@@ -2948,8 +3079,10 @@
         try {
           refs.dashboard.classList.add("hidden");
           showStatus("Leyendo archivo...", "");
+          showLoading("Leyendo archivo...");
           const { text, textFileName } = await readUploadedFile(file);
           showStatus("Analizando mensajes...", "");
+          showLoading("Analizando mensajes...");
           const selectedOrder = refs.dateFormat.value === "auto" ? inferDateOrder(text) : refs.dateFormat.value;
           const result = parseChat(text, selectedOrder);
           if (!result.messages.length) {
@@ -2964,11 +3097,16 @@
           initFilters();
           refs.heroSection.classList.add("hidden");
           refs.dashboard.classList.remove("hidden");
-          renderAll();
-          requestAnimationFrame(syncDashboardPadding);
-          showStatus(`Listo: ${formatNumber(state.messages.length)} mensajes cargados de ${formatNumber(aggregateBySender(state.messages).length)} personas.`, "ok");
+          showLoading("Generando dashboard...");
+          requestAnimationFrame(() => setTimeout(() => {
+            renderAll();
+            hideLoading();
+            requestAnimationFrame(syncDashboardPadding);
+            showStatus(`Listo: ${formatNumber(state.messages.length)} mensajes cargados de ${formatNumber(aggregateBySender(state.messages).length)} personas.`, "ok");
+          }, 16));
         } catch (error) {
           console.error(error);
+          hideLoading();
           showStatus(error.message || "No pude procesar el archivo.", "err");
         }
       }
@@ -3012,15 +3150,19 @@
         state.excludedPeople = new Set();
         updatePeopleCount();
         try { localStorage.removeItem(LS_EXCLUDED_KEY); } catch(_) {}
-        renderAll();
       });
       refs.peopleNone.addEventListener("click", () => {
         refs.peopleCheckList.querySelectorAll("input").forEach(cb => cb.checked = false);
         readPeopleFilter();
-        renderAll();
+      });
+      refs.peopleApply.addEventListener("click", () => {
+        refs.peopleDropdown.classList.remove("open");
+        withLoading("Aplicando filtro...", renderAll);
       });
 
-      [refs.dateFrom, refs.dateTo, refs.groupBy, refs.topLimit].forEach(control => control.addEventListener("change", renderAll));
+      [refs.dateFrom, refs.dateTo, refs.groupBy, refs.topLimit].forEach(control =>
+        control.addEventListener("change", () => withLoading("Calculando...", renderAll))
+      );
       [refs.weekSelect, refs.monthSelect, refs.yearSelect].forEach(control => control.addEventListener("change", renderTopCards));
       refs.lineGranTabs.addEventListener("click", e => {
         const btn = e.target.closest(".hot-tab");
