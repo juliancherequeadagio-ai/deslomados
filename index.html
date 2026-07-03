@@ -618,6 +618,44 @@
       background: var(--accent-3);
     }
 
+    /* ── Hot topic tabs ─────────────────────────────────────────────── */
+    .hot-topic-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .hot-tabs {
+      display: flex;
+      gap: 4px;
+      background: rgba(255,255,255,.06);
+      border-radius: 10px;
+      padding: 3px;
+    }
+
+    .hot-tab {
+      padding: 5px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      background: transparent;
+      color: var(--muted-2);
+      border: none;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+
+    .hot-tab.active {
+      background: var(--accent);
+      color: #090d14;
+    }
+
+    .hot-tab:not(.active):hover { background: rgba(255,255,255,.1); color: var(--text); }
+
+    .hot-topic-controls select { flex: 1; min-width: 130px; }
+
     .topic-hero {
       display: grid;
       grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr);
@@ -1342,17 +1380,22 @@
         </article>
 
         <article id="hotTopicWeekly" class="panel">
-        <div class="section-head">
-          <div>
-            <h2>Hot topic semanal</h2>
-            <p>Detecta que termino fue mas distintivo en una semana comparado contra el resto del chat.</p>
+          <div class="panel-head">
+            <div>
+              <h2>Hot topic</h2>
+              <p>Termino mas distintivo del periodo vs el resto del historial.</p>
+            </div>
           </div>
-          <label>Semana
-            <select id="hotWeekSelect"></select>
-          </label>
-        </div>
-        <div id="hotTopic"></div>
-      </article>
+          <div class="hot-topic-controls">
+            <div class="hot-tabs" id="hotPeriodTabs">
+              <button class="hot-tab active" data-period="week">Semana</button>
+              <button class="hot-tab" data-period="month">Mes</button>
+              <button class="hot-tab" data-period="year">Año</button>
+            </div>
+            <select id="hotPeriodSelect"></select>
+          </div>
+          <div id="hotTopic"></div>
+        </article>
       </div><!-- /.records-hot-grid -->
 
       <article id="evolutionSection" class="panel full">
@@ -1434,7 +1477,8 @@
         weekSelect: $("#weekSelect"),
         monthSelect: $("#monthSelect"),
         yearSelect: $("#yearSelect"),
-        hotWeekSelect: $("#hotWeekSelect"),
+        hotPeriodTabs: $("#hotPeriodTabs"),
+        hotPeriodSelect: $("#hotPeriodSelect"),
         hotTopic: $("#hotTopic"),
         topWeekCard: $("#topWeekCard"),
         topMonthCard: $("#topMonthCard"),
@@ -1995,21 +2039,27 @@
           .slice(0, limit);
       }
 
+      function activeHotPeriod() {
+        const active = refs.hotPeriodTabs.querySelector(".hot-tab.active");
+        return active ? active.dataset.period : "week";
+      }
+
       function renderHotTopic() {
-        const key = refs.hotWeekSelect.value;
+        const period = activeHotPeriod();
+        const key = refs.hotPeriodSelect.value;
         if (!key) {
-          refs.hotTopic.innerHTML = `<div class="empty">Cargá un chat para calcular el hot topic semanal.</div>`;
+          refs.hotTopic.innerHTML = `<div class="empty">Cargá un chat para calcular el hot topic.</div>`;
           return;
         }
         const scopedMessages = state.messages.filter(msg => state.excludedPeople.size === 0 || !state.excludedPeople.has(msg.sender));
-        const weekMessages = scopedMessages.filter(msg => periodKey(msg.date, "week") === key);
-        if (!weekMessages.length) {
-          refs.hotTopic.innerHTML = `<div class="empty">No hay mensajes en esa semana para el filtro actual.</div>`;
+        const periodMessages = scopedMessages.filter(msg => periodKey(msg.date, period) === key);
+        if (!periodMessages.length) {
+          refs.hotTopic.innerHTML = `<div class="empty">No hay mensajes en ese periodo para el filtro actual.</div>`;
           return;
         }
-        const referenceMessages = scopedMessages.filter(msg => periodKey(msg.date, "week") !== key);
-        const items = hotTopicItems(weekMessages, referenceMessages.length ? referenceMessages : scopedMessages, 10);
-        const label = periodLabel(key, "week", weekMessages[0].date);
+        const referenceMessages = scopedMessages.filter(msg => periodKey(msg.date, period) !== key);
+        const items = hotTopicItems(periodMessages, referenceMessages.length ? referenceMessages : scopedMessages, 10);
+        const label = periodLabel(key, period, periodMessages[0].date);
         if (!items.length) {
           refs.hotTopic.innerHTML = `<div class="empty">Hay mensajes en ${escapeHtml(label)}, pero no suficientes palabras distintivas.</div>`;
           return;
@@ -2044,7 +2094,7 @@
           state.periods[type] = Array.from(seen.values()).sort((a, b) => a.key.localeCompare(b.key));
         }
         fillSelect(refs.weekSelect, state.periods.week);
-        fillSelect(refs.hotWeekSelect, state.periods.week);
+        fillSelect(refs.hotPeriodSelect, state.periods.week);
         fillSelect(refs.monthSelect, state.periods.month);
         fillSelect(refs.yearSelect, state.periods.year);
       }
@@ -2619,7 +2669,7 @@
         }
         refs.groupBy.value = "week";
         refs.topLimit.value = "20";
-        if (state.periods.week.length) refs.hotWeekSelect.value = state.periods.week[state.periods.week.length - 1].key;
+        if (state.periods.week.length) refs.hotPeriodSelect.value = state.periods.week[state.periods.week.length - 1].key;
         renderAll();
       }
 
@@ -2734,7 +2784,20 @@
 
       [refs.personFilter, refs.dateFrom, refs.dateTo, refs.groupBy, refs.topLimit].forEach(control => control.addEventListener("change", renderAll));
       [refs.weekSelect, refs.monthSelect, refs.yearSelect].forEach(control => control.addEventListener("change", renderTopCards));
-      refs.hotWeekSelect.addEventListener("change", renderHotTopic);
+      refs.hotPeriodSelect.addEventListener("change", renderHotTopic);
+      refs.hotPeriodTabs.addEventListener("click", e => {
+        const btn = e.target.closest(".hot-tab");
+        if (!btn) return;
+        refs.hotPeriodTabs.querySelectorAll(".hot-tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const period = btn.dataset.period;
+        fillSelect(refs.hotPeriodSelect, state.periods[period]);
+        // Selecciona el periodo más reciente al cambiar de tab
+        if (state.periods[period].length) {
+          refs.hotPeriodSelect.value = state.periods[period][state.periods[period].length - 1].key;
+        }
+        renderHotTopic();
+      });
       refs.resetFilters.addEventListener("click", resetFilters);
       refs.exportCsv.addEventListener("click", exportCsv);
       refs.exportPdf.addEventListener("click", () => {
