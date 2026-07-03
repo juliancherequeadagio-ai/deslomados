@@ -727,6 +727,166 @@
       text-align: center;
     }
 
+    /* ── Personalidades del grupo ───────────────────────────────────── */
+    .personality-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .personality-card {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      transition: transform .15s ease;
+    }
+
+    .personality-card:hover { transform: translateY(-2px); }
+
+    .personality-title {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted-2);
+    }
+
+    .personality-emoji { font-size: 30px; margin: 10px 0 8px; line-height: 1; }
+
+    .personality-name {
+      font-size: 22px;
+      font-weight: 950;
+      letter-spacing: -.05em;
+      word-break: break-word;
+    }
+
+    .personality-stat {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .personality-desc {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted-2);
+      line-height: 1.4;
+    }
+
+    /* ── Récords históricos ──────────────────────────────────────────── */
+    .records-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .record-card {
+      padding: 20px;
+      border-radius: 20px;
+    }
+
+    .record-card.accent   { border: 1px solid rgba(157,248,113,.22); background: linear-gradient(135deg, rgba(157,248,113,.10), rgba(255,255,255,.04)); }
+    .record-card.accent-2 { border: 1px solid rgba(94,234,212,.22);  background: linear-gradient(135deg, rgba(94,234,212,.10),  rgba(255,255,255,.04)); }
+    .record-card.accent-3 { border: 1px solid rgba(248,214,109,.22); background: linear-gradient(135deg, rgba(248,214,109,.10), rgba(255,255,255,.04)); }
+    .record-card.danger   { border: 1px solid rgba(255,107,139,.22); background: linear-gradient(135deg, rgba(255,107,139,.10), rgba(255,255,255,.04)); }
+
+    .record-emoji { font-size: 26px; margin-bottom: 10px; }
+
+    .record-label {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted-2);
+    }
+
+    .record-value {
+      margin-top: 10px;
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 950;
+      letter-spacing: -.06em;
+      line-height: 1;
+    }
+
+    .record-detail {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    /* ── Evolución de participación ──────────────────────────────────── */
+    .evo-wrap { overflow-x: auto; padding-bottom: 4px; }
+
+    .evo-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      padding-bottom: 30px;
+    }
+
+    .evo-col {
+      position: relative;
+      flex: 0 0 24px;
+      width: 24px;
+    }
+
+    .evo-stack {
+      height: 190px;
+      display: flex;
+      flex-direction: column-reverse;
+      border-radius: 4px 4px 0 0;
+      overflow: hidden;
+      gap: 1px;
+    }
+
+    .evo-segment {
+      width: 100%;
+      min-height: 2px;
+      transition: opacity .15s;
+    }
+
+    .evo-segment:hover { opacity: .75; cursor: default; }
+
+    .evo-label {
+      position: absolute;
+      bottom: -28px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-45deg);
+      transform-origin: top left;
+      width: 70px;
+      color: var(--muted-2);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    .evo-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      margin-top: 18px;
+    }
+
+    .evo-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .evo-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+    }
+
     @media (max-width: 1120px) {
       .controls { grid-template-columns: repeat(3, minmax(150px, 1fr)); position: static; }
       .kpi-grid { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
@@ -858,6 +1018,36 @@
       </div>
 
 
+      <article id="personalitySection" class="panel full">
+        <div class="panel-head">
+          <div>
+            <h2>Personalidades del grupo</h2>
+            <p>Los titulos no oficiales, pero muy merecidos.</p>
+          </div>
+        </div>
+        <div id="personalityGrid" class="personality-grid"></div>
+      </article>
+
+      <article id="recordsSection" class="panel full">
+        <div class="panel-head">
+          <div>
+            <h2>Records historicos</h2>
+            <p>Los momentos epicos de la historia del grupo.</p>
+          </div>
+        </div>
+        <div id="recordsGrid" class="records-grid"></div>
+      </article>
+
+      <article id="evolutionSection" class="panel full">
+        <div class="panel-head">
+          <div>
+            <h2>Evolucion de participacion</h2>
+            <p>Como fue cambiando el peso de cada integrante mes a mes. Top 8 personas por total de mensajes.</p>
+          </div>
+        </div>
+        <div id="evolutionChart"></div>
+      </article>
+
       <article id="hotTopicWeekly" class="panel full">
         <div class="section-head">
           <div>
@@ -933,6 +1123,9 @@
         topMonthCard: $("#topMonthCard"),
         topYearCard: $("#topYearCard"),
         topHistoryCard: $("#topHistoryCard"),
+        personalityGrid: $("#personalityGrid"),
+        recordsGrid: $("#recordsGrid"),
+        evolutionChart: $("#evolutionChart"),
         personChart: $("#personChart"),
         timelineChart: $("#timelineChart"),
         heatmap: $("#heatmap"),
@@ -945,6 +1138,11 @@
       const STOP_WORDS = new Set([
         "ahi", "algo", "algun", "alguna", "algunas", "alguno", "algunos", "alla", "alli", "ante", "antes", "aquel", "aquella", "aquellas", "aquello", "aquellos", "aqui", "asi", "cada", "casi", "como", "con", "cual", "cuales", "cuando", "cuanto", "cuantos", "del", "desde", "donde", "dos", "ese", "esa", "esas", "eso", "esos", "esta", "estas", "este", "esto", "estos", "fue", "han", "hay", "hoy", "jaja", "jajaj", "jajaja", "jajajaja", "jajajajaj", "jajajajaja", "jajajajajaja", "las", "les", "los", "mas", "menos", "muy", "nada", "nos", "para", "pero", "por", "porque", "pues", "que", "quien", "sin", "son", "sus", "tambien", "tan", "tanto", "tenes", "tengo", "tiene", "tienen", "todo", "todos", "tus", "una", "uno", "unos", "ustedes", "vos", "voy", "whatsapp"
       ]);
+      const PALETTE = [
+        "#9df871", "#5eead4", "#f8d66d", "#f87171",
+        "#818cf8", "#fb923c", "#34d399", "#e879f9"
+      ];
+
       const INSULT_PATTERNS = [
         { label: "boludo/a", re: /\bbolud[oa]s?\b/g },
         { label: "pelotudo/a", re: /\bpelotud[oa]s?\b/g },
@@ -1706,6 +1904,243 @@
         bar.style.width = `${Math.max(3, share)}%`;
       }
 
+      /* ── Personalidades del grupo ───────────────────────────────────── */
+
+      function computePersonalities(messages) {
+        if (messages.length < 2) return [];
+        const MIN_MSGS = 30;
+        const sd = new Map();
+
+        for (const msg of messages) {
+          if (!sd.has(msg.sender)) {
+            sd.set(msg.sender, { sender: msg.sender, total: 0, night: 0, questions: 0, words: 0, activeDays: new Set(), maxConsecutive: 0, groupStarter: 0 });
+          }
+          const s = sd.get(msg.sender);
+          s.total++;
+          s.words += msg.words || 0;
+          if (msg.date.getHours() < 6) s.night++;
+          if (/\?/.test(msg.text)) s.questions++;
+          s.activeDays.add(dayKey(msg.date));
+        }
+
+        // Racha máxima de mensajes consecutivos del mismo sender
+        let curSender = null, curStreak = 0;
+        for (const msg of messages) {
+          if (msg.sender === curSender) {
+            curStreak++;
+          } else {
+            if (curSender && sd.has(curSender)) {
+              const s = sd.get(curSender);
+              if (curStreak > s.maxConsecutive) s.maxConsecutive = curStreak;
+            }
+            curSender = msg.sender;
+            curStreak = 1;
+          }
+        }
+        if (curSender && sd.has(curSender)) {
+          const s = sd.get(curSender);
+          if (curStreak > s.maxConsecutive) s.maxConsecutive = curStreak;
+        }
+
+        // Racha activa + racha fantasma por sender
+        for (const [, s] of sd) {
+          const days = Array.from(s.activeDays).sort();
+          s.longestActiveStreak = days.length ? 1 : 0;
+          s.longestGap = 0;
+          let best = 1, cur = 1, maxGap = 0;
+          for (let i = 1; i < days.length; i++) {
+            const diff = Math.round((new Date(days[i]) - new Date(days[i - 1])) / 86400000);
+            if (diff === 1) { cur++; if (cur > best) best = cur; }
+            else { cur = 1; const gap = diff - 1; if (gap > maxGap) maxGap = gap; }
+          }
+          s.longestActiveStreak = best;
+          s.longestGap = maxGap;
+        }
+
+        // Primer mensaje tras silencio grupal de 6+ horas = "el que ceba"
+        let lastTs = 0;
+        for (const msg of messages) {
+          if (lastTs > 0 && msg.ts - lastTs >= 6 * 3600 * 1000) {
+            const s = sd.get(msg.sender);
+            if (s) s.groupStarter++;
+          }
+          lastTs = msg.ts;
+        }
+
+        const qualified = Array.from(sd.values()).filter(s => s.total >= MIN_MSGS);
+        if (!qualified.length) return [];
+
+        const win = (arr, key, desc = true) => arr.length
+          ? arr.reduce((b, s) => (desc ? s[key] > b[key] : s[key] < b[key]) ? s : b)
+          : null;
+
+        const withAvg = qualified.map(s => ({ ...s, avgWords: s.total ? s.words / s.total : 0 }));
+
+        const monologuista = win(qualified, "maxConsecutive");
+        const insomne      = win(qualified, "night");
+        const fantasma     = win(qualified, "longestGap");
+        const streaker     = win(qualified, "longestActiveStreak");
+        const pregunton    = win(qualified, "questions");
+        const telegraf     = win(withAvg, "avgWords", false);
+        const poeta        = win(withAvg, "avgWords");
+        const queceba      = win(qualified, "groupStarter");
+
+        const results = [];
+        if (monologuista) results.push({ emoji: "💬", title: "El monologuista", name: monologuista.sender, stat: `${monologuista.maxConsecutive} mensajes seguidos`, desc: "manda uno tras otro sin esperar respuesta" });
+        if (insomne && insomne.night > 0) results.push({ emoji: "🌙", title: "El insomne", name: insomne.sender, stat: `${formatNumber(insomne.night)} msgs entre las 00 y las 06`, desc: "activo cuando todos duermen" });
+        if (fantasma && fantasma.longestGap >= 2) results.push({ emoji: "👻", title: "El fantasma", name: fantasma.sender, stat: `${fantasma.longestGap} dias sin aparecer`, desc: "desaparece y reaparece sin explicacion" });
+        if (streaker) results.push({ emoji: "🔥", title: "El streaker", name: streaker.sender, stat: `${streaker.longestActiveStreak} dias consecutivos activo`, desc: "jamas falla un dia" });
+        if (pregunton && pregunton.questions > 0) results.push({ emoji: "🤔", title: "El pregunton", name: pregunton.sender, stat: `${formatNumber(pregunton.questions)} preguntas mandadas`, desc: "siempre tiene algo que consultar" });
+        if (telegraf) results.push({ emoji: "📨", title: "El telegrafista", name: telegraf.sender, stat: `${telegraf.avgWords.toFixed(1)} palabras por mensaje`, desc: "economiza palabras al maximo" });
+        if (poeta && (!telegraf || poeta.sender !== telegraf.sender)) results.push({ emoji: "📜", title: "El poeta", name: poeta.sender, stat: `${poeta.avgWords.toFixed(1)} palabras por mensaje`, desc: "escribe parrafos enteros" });
+        if (queceba && queceba.groupStarter > 0) results.push({ emoji: "🎯", title: "El que ceba el grupo", name: queceba.sender, stat: `${formatNumber(queceba.groupStarter)} veces rompio el silencio`, desc: "siempre empieza la conversacion" });
+
+        return results;
+      }
+
+      function renderPersonalityCards(messages) {
+        const personalities = computePersonalities(messages);
+        if (!personalities.length) {
+          refs.personalityGrid.innerHTML = `<div class="empty">Se necesitan al menos 30 mensajes por persona para calcular las personalidades.</div>`;
+          return;
+        }
+        refs.personalityGrid.innerHTML = personalities.map(p => `
+          <article class="personality-card">
+            <div class="personality-title">${escapeHtml(p.title)}</div>
+            <div class="personality-emoji">${p.emoji}</div>
+            <div class="personality-name">${escapeHtml(p.name)}</div>
+            <div class="personality-stat">${escapeHtml(p.stat)}</div>
+            <div class="personality-desc">${escapeHtml(p.desc)}</div>
+          </article>
+        `).join("");
+      }
+
+      /* ── Récords históricos ──────────────────────────────────────────── */
+
+      function renderGroupRecords(messages) {
+        if (!messages.length) {
+          refs.recordsGrid.innerHTML = `<div class="empty">Sin datos.</div>`;
+          return;
+        }
+
+        const records = [];
+
+        // Pausa épica: el silencio más largo entre mensajes consecutivos
+        let maxGapMs = 0, gapSender = "", gapDate = null;
+        for (let i = 1; i < messages.length; i++) {
+          const gap = messages[i].ts - messages[i - 1].ts;
+          if (gap > maxGapMs) { maxGapMs = gap; gapSender = messages[i - 1].sender; gapDate = messages[i - 1].date; }
+        }
+        if (gapDate) {
+          const h = Math.round(maxGapMs / 3600000);
+          const d = Math.floor(h / 24);
+          const gapStr = d >= 1 ? `${d} dia${d > 1 ? "s" : ""}${h % 24 ? ` ${h % 24}h` : ""}` : `${h} horas`;
+          records.push({ emoji: "🔇", label: "Pausa epica", color: "danger", value: gapStr, detail: `El mayor silencio del grupo, tras el ultimo mensaje de ${gapSender} el ${formatDateShort(gapDate)}.` });
+        }
+
+        // Día de la batalla: el día con más mensajes
+        const dayMap = new Map();
+        for (const msg of messages) {
+          const k = dayKey(msg.date);
+          const it = dayMap.get(k) || { date: msg.date, count: 0 };
+          it.count++;
+          dayMap.set(k, it);
+        }
+        const battle = Array.from(dayMap.values()).sort((a, b) => b.count - a.count)[0];
+        if (battle) {
+          records.push({ emoji: "⚔️", label: "Dia de la batalla", color: "accent", value: `${formatNumber(battle.count)} msgs`, detail: `El ${formatDateShort(battle.date)}, el dia mas activo de la historia del grupo.` });
+        }
+
+        // Hora pico histórica
+        const hourBuckets = Array(24).fill(0);
+        for (const msg of messages) hourBuckets[msg.date.getHours()]++;
+        const peakH = hourBuckets.indexOf(Math.max(...hourBuckets));
+        records.push({ emoji: "⏰", label: "Hora pico historica", color: "accent-2", value: `${pad2(peakH)}:00 hs`, detail: `${formatNumber(hourBuckets[peakH])} mensajes totales en esa hora. El grupo vive a las ${pad2(peakH)}.` });
+
+        // Vocabulario más rico
+        const vocabMap = new Map();
+        for (const msg of messages) {
+          if (!vocabMap.has(msg.sender)) vocabMap.set(msg.sender, new Set());
+          for (const token of tokenizeForStats(msg.text, false)) vocabMap.get(msg.sender).add(token);
+        }
+        const vocabTop = Array.from(vocabMap.entries()).map(([s, w]) => ({ sender: s, n: w.size })).sort((a, b) => b.n - a.n)[0];
+        if (vocabTop) {
+          records.push({ emoji: "📚", label: "Vocabulario mas rico", color: "accent-3", value: `${formatNumber(vocabTop.n)} palabras unicas`, detail: `${vocabTop.sender} es quien mas vocabulario distinto uso en el grupo.` });
+        }
+
+        refs.recordsGrid.innerHTML = records.map(r => `
+          <article class="record-card ${escapeAttr(r.color)}">
+            <div class="record-emoji">${r.emoji}</div>
+            <div class="record-label">${escapeHtml(r.label)}</div>
+            <div class="record-value">${escapeHtml(r.value)}</div>
+            <div class="record-detail">${escapeHtml(r.detail)}</div>
+          </article>
+        `).join("");
+      }
+
+      /* ── Evolución de participación ──────────────────────────────────── */
+
+      function renderParticipationEvolution(messages) {
+        const el = refs.evolutionChart;
+        if (!messages.length) {
+          el.innerHTML = `<div class="empty">Sin datos.</div>`;
+          return;
+        }
+
+        // Armar mapa mes → sender → cantidad
+        const monthMap = new Map();
+        for (const msg of messages) {
+          const mk = monthKey(msg.date);
+          if (!monthMap.has(mk)) monthMap.set(mk, { key: mk, date: msg.date, senders: new Map() });
+          const m = monthMap.get(mk);
+          m.senders.set(msg.sender, (m.senders.get(msg.sender) || 0) + 1);
+        }
+
+        const months = Array.from(monthMap.values()).sort((a, b) => a.key.localeCompare(b.key));
+        if (months.length < 2) {
+          el.innerHTML = `<div class="empty">Se necesitan al menos 2 meses de datos para mostrar la evolucion.</div>`;
+          return;
+        }
+
+        // Top 8 por total histórico
+        const totalMap = new Map();
+        for (const m of months) {
+          for (const [s, c] of m.senders) totalMap.set(s, (totalMap.get(s) || 0) + c);
+        }
+        const topSenders = Array.from(totalMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([s]) => s);
+
+        const labelEvery = Math.max(1, Math.ceil(months.length / 14));
+        let html = `<div class="evo-wrap"><div class="evo-chart" style="min-width:${Math.max(360, months.length * 28)}px">`;
+
+        for (let i = 0; i < months.length; i++) {
+          const m = months[i];
+          const total = Array.from(m.senders.values()).reduce((a, b) => a + b, 0) || 1;
+
+          let segments = "";
+          for (let si = 0; si < topSenders.length; si++) {
+            const count = m.senders.get(topSenders[si]) || 0;
+            if (!count) continue;
+            segments += `<div class="evo-segment" style="flex: ${count} 0 0; background: ${PALETTE[si]}" title="${escapeAttr(topSenders[si] + ": " + (count * 100 / total).toFixed(1) + "% (" + formatNumber(count) + " msgs)")}"></div>`;
+          }
+          // Segmento "Otros" muted para que la barra siempre llene al 100%
+          const othersCount = total - topSenders.reduce((sum, s) => sum + (m.senders.get(s) || 0), 0);
+          if (othersCount > 0) {
+            segments += `<div class="evo-segment" style="flex: ${othersCount} 0 0; background: rgba(255,255,255,.08)" title="${escapeAttr("Otros: " + formatNumber(othersCount) + " msgs")}"></div>`;
+          }
+
+          const showLabel = i % labelEvery === 0 || i === months.length - 1;
+          const label = showLabel ? `<div class="evo-label">${escapeHtml(monthNames[m.date.getMonth()] + " '" + String(m.date.getFullYear()).slice(2))}</div>` : "";
+          html += `<div class="evo-col"><div class="evo-stack">${segments}</div>${label}</div>`;
+        }
+
+        html += `</div><div class="evo-legend">`;
+        for (let si = 0; si < topSenders.length; si++) {
+          html += `<span class="evo-legend-item"><span class="evo-dot" style="background:${PALETTE[si]}"></span>${escapeHtml(topSenders[si])}</span>`;
+        }
+        html += `</div></div>`;
+        el.innerHTML = html;
+      }
+
       function renderTopCards() {
         renderTopCard(refs.topWeekCard, topFor("week", refs.weekSelect.value));
         renderTopCard(refs.topMonthCard, topFor("month", refs.monthSelect.value));
@@ -1723,6 +2158,9 @@
         renderRanking(filtered);
         renderHotTopic();
         renderTopCards();
+        renderPersonalityCards(filtered);
+        renderGroupRecords(filtered);
+        renderParticipationEvolution(filtered);
         refs.fileSummary.textContent = `${state.fileName} | TXT: ${state.textFileName} | ${formatNumber(state.messages.length)} mensajes parseados | ${formatNumber(state.systemLines)} eventos del sistema ignorados | formato detectado: ${state.inferredOrder.toUpperCase()}`;
       }
 
