@@ -1080,35 +1080,58 @@
 
     /* ── Multi-select personas ───────────────────────────────────────── */
     /* ── Selector de participantes ───────────────────────────────────── */
-    .people-filter-block {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      width: 100%;
-    }
+    /* ── Dropdown de participantes ───────────────────────────────────── */
+    .people-dropdown { position: relative; }
 
-    .people-filter-head {
+    .people-dropdown-btn {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .people-filter-label {
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
       font-size: 12px;
-      font-weight: 800;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      color: var(--muted);
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      width: auto;
     }
 
-    .people-filter-actions {
+    .people-dropdown-btn:hover { background: rgba(255,255,255,.10); }
+    .people-dropdown-btn .arr { font-size: 10px; color: var(--muted-2); transition: transform .2s; }
+    .people-dropdown.open .arr { transform: rotate(180deg); }
+
+    .people-dropdown-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 300;
+      min-width: 220px;
+      max-height: 320px;
+      background: rgba(9,13,20,.97);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.6);
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    .people-dropdown.open .people-dropdown-panel { display: flex; }
+
+    .people-dropdown-actions {
       display: flex;
-      gap: 4px;
+      gap: 6px;
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
 
-    .people-filter-actions button {
-      padding: 2px 8px;
+    .people-dropdown-actions button {
+      flex: 1;
+      padding: 4px 0;
       font-size: 11px;
       font-weight: 700;
       background: rgba(255,255,255,.07);
@@ -1119,50 +1142,44 @@
       width: auto;
     }
 
-    .people-filter-actions button:hover { background: rgba(255,255,255,.14); color: var(--text); }
+    .people-dropdown-actions button:hover { background: rgba(255,255,255,.14); color: var(--text); }
 
     .people-check-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 5px;
-      width: 100%;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
     .pcb-item {
       display: flex;
       align-items: center;
-      gap: 5px;
-      padding: 5px 10px 5px 8px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.05);
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 7px;
       cursor: pointer;
       user-select: none;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text);
-      transition: background .12s, border-color .12s;
+      transition: background .1s;
       white-space: nowrap;
     }
 
-    .pcb-item:hover { background: rgba(255,255,255,.10); }
+    .pcb-item:hover { background: rgba(255,255,255,.07); }
 
     .pcb-item input[type="checkbox"] {
       accent-color: var(--accent);
-      width: 13px;
-      height: 13px;
+      width: 14px;
+      height: 14px;
       min-height: auto;
       padding: 0;
       cursor: pointer;
       flex-shrink: 0;
     }
 
-    /* Chip apagado cuando está desmarcado */
-    .pcb-item:has(input:not(:checked)) {
-      opacity: .4;
-      border-color: transparent;
-      background: rgba(255,255,255,.02);
-    }
+    .pcb-item:has(input:not(:checked)) { opacity: .45; }
 
     /* ── Firma léxica ────────────────────────────────────────────────── */
     .signature-grid {
@@ -1324,15 +1341,17 @@
           </div>
         </div>
         <div class="controls-body" id="controlsBody">
-          <div class="people-filter-block">
-            <div class="people-filter-head">
-              <span class="people-filter-label">Participantes</span>
-              <div class="people-filter-actions">
+          <div class="people-dropdown" id="peopleDropdown">
+            <button class="people-dropdown-btn" id="peopleDdBtn" type="button">
+              Participantes: <span id="peopleCount">todos</span> <span class="arr">▾</span>
+            </button>
+            <div class="people-dropdown-panel" id="peopleDdPanel">
+              <div class="people-dropdown-actions">
                 <button id="peopleAll" type="button">Todos</button>
                 <button id="peopleNone" type="button">Ninguno</button>
               </div>
+              <div id="peopleCheckList" class="people-check-list"></div>
             </div>
-            <div id="peopleCheckList" class="people-check-list"></div>
           </div>
           <label>Desde
             <input id="dateFrom" type="date" />
@@ -1545,6 +1564,9 @@
         changeFileBtn: $("#changeFileBtn"),
         status: $("#status"),
         dashboard: $("#dashboard"),
+        peopleDropdown: $("#peopleDropdown"),
+        peopleDdBtn: $("#peopleDdBtn"),
+        peopleCount: $("#peopleCount"),
         peopleCheckList: $("#peopleCheckList"),
         peopleAll: $("#peopleAll"),
         peopleNone: $("#peopleNone"),
@@ -2198,10 +2220,17 @@
 
       const LS_EXCLUDED_KEY = "tablero_excluded_people";
 
+      function updatePeopleCount() {
+        const total = refs.peopleCheckList.querySelectorAll("input").length;
+        const checked = refs.peopleCheckList.querySelectorAll("input:checked").length;
+        refs.peopleCount.textContent = checked === total ? "todos" : `${checked} de ${total}`;
+      }
+
       function readPeopleFilter() {
         state.excludedPeople = new Set(
           Array.from(refs.peopleCheckList.querySelectorAll("input:not(:checked)")).map(cb => cb.value)
         );
+        updatePeopleCount();
         try { localStorage.setItem(LS_EXCLUDED_KEY, JSON.stringify([...state.excludedPeople])); } catch(_) {}
       }
 
@@ -2216,6 +2245,7 @@
             <span>${escapeHtml(name)}</span>
           </label>`;
         }).join("");
+        updatePeopleCount();
         refs.peopleCheckList.addEventListener("change", () => { readPeopleFilter(); renderAll(); });
       }
 
@@ -2735,18 +2765,15 @@
 
         const gran = activeLineGran();
 
-        // Función de clave temporal según granularidad
         const bucketKey = date => {
           if (gran === "day") return date.toISOString().slice(0, 10);
           if (gran === "month") return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-          // week: lunes de la semana
           const d = new Date(date); d.setHours(0,0,0,0);
           const day = d.getDay() || 7; d.setDate(d.getDate() - day + 1);
           return d.toISOString().slice(0, 10);
         };
         const bucketLabel = key => {
           const d = new Date(key + (gran === "month" ? "-01" : "") + "T00:00:00");
-          if (gran === "year") return String(d.getFullYear());
           if (gran === "month") return `${monthNames[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`;
           return `${d.getDate()} ${monthNames[d.getMonth()]}`;
         };
@@ -2759,99 +2786,80 @@
         const senders = Array.from(totalBySender.entries()).sort((a, b) => b[1] - a[1]).slice(0, limit).map(([s]) => s);
         if (!senders.length) { el.innerHTML = `<div class="empty">Sin datos.</div>`; return; }
 
-        // Armar buckets
+        // Buckets ordenados cronológicamente
         const bucketSet = new Map();
         for (const msg of messages) {
           const k = bucketKey(msg.date);
           if (!bucketSet.has(k)) bucketSet.set(k, new Map());
-          const b = bucketSet.get(k);
-          b.set(msg.sender, (b.get(msg.sender) || 0) + 1);
+          bucketSet.get(k).set(msg.sender, (bucketSet.get(k).get(msg.sender) || 0) + 1);
         }
         const buckets = Array.from(bucketSet.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-        if (buckets.length < 2) { el.innerHTML = `<div class="empty">Se necesitan al menos 2 periodos para trazar el grafico.</div>`; return; }
+        if (buckets.length < 2) { el.innerHTML = `<div class="empty">Se necesitan al menos 2 periodos.</div>`; return; }
 
-        // Dimensiones del SVG
-        const W = 900, H = 280, PAD = { top: 16, right: 20, bottom: 36, left: 48 };
+        // Acumular mensajes por sender: cada punto = total hasta ese período
+        const cumulative = new Map(); // sender → array de totales acumulados
+        for (const s of senders) cumulative.set(s, []);
+        const running = new Map(senders.map(s => [s, 0]));
+        for (const [, bmap] of buckets) {
+          for (const s of senders) {
+            running.set(s, running.get(s) + (bmap.get(s) || 0));
+            cumulative.get(s).push(running.get(s));
+          }
+        }
+
+        const n = buckets.length;
+        const maxVal = Math.max(...senders.map(s => cumulative.get(s)[n - 1])) || 1;
+
+        const W = 900, H = 300, PAD = { top: 20, right: 80, bottom: 40, left: 56 };
         const innerW = W - PAD.left - PAD.right;
         const innerH = H - PAD.top - PAD.bottom;
-        const n = buckets.length;
-
-        // Escala X (posición de cada bucket)
-        const xOf = i => PAD.left + (n === 1 ? innerW / 2 : i * innerW / (n - 1));
-
-        // Escala Y
-        let maxVal = 0;
-        for (const [, bmap] of buckets) for (const s of senders) maxVal = Math.max(maxVal, bmap.get(s) || 0);
-        maxVal = maxVal || 1;
+        const xOf = i => PAD.left + i * innerW / (n - 1);
         const yOf = v => PAD.top + innerH - (v / maxVal) * innerH;
 
-        // Ticks Y (4 niveles)
+        // Nice ticks Y (5 niveles)
         const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => Math.round(f * maxVal));
-
-        // Ticks X (máximo ~12 etiquetas)
-        const labelEvery = Math.max(1, Math.ceil(n / 12));
+        const labelEvery = Math.max(1, Math.ceil(n / 14));
 
         let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="linechart-svg">`;
 
-        // Grid lines Y
-        svg += `<g class="lc-grid">`;
+        // Grid Y
         for (const tick of yTicks) {
           const y = yOf(tick);
-          svg += `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" class="lc-gridline"/>`;
-          svg += `<text x="${PAD.left - 6}" y="${y + 4}" class="lc-axis-label" text-anchor="end">${formatNumber(tick)}</text>`;
+          svg += `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="rgba(255,255,255,.07)" stroke-width="1"/>`;
+          svg += `<text x="${PAD.left - 8}" y="${y + 4}" class="lc-axis-label" text-anchor="end">${formatNumber(tick)}</text>`;
         }
-        svg += `</g>`;
 
         // Labels X
-        svg += `<g class="lc-xlabels">`;
         for (let i = 0; i < n; i++) {
           if (i % labelEvery !== 0 && i !== n - 1) continue;
-          const x = xOf(i);
-          svg += `<text x="${x}" y="${H - 6}" class="lc-axis-label" text-anchor="middle">${escapeHtml(bucketLabel(buckets[i][0]))}</text>`;
+          svg += `<text x="${xOf(i)}" y="${H - 8}" class="lc-axis-label" text-anchor="middle">${escapeHtml(bucketLabel(buckets[i][0]))}</text>`;
         }
-        svg += `</g>`;
 
-        const yBase = yOf(0); // línea de base Y=0
-
-        // Primero las áreas (atrás), luego las líneas y marcadores (adelante)
+        // Líneas acumuladas
         for (let si = 0; si < senders.length; si++) {
           const color = PALETTE[si % PALETTE.length];
           const sender = senders[si];
-          // Polígono cerrado para el área bajo la curva
-          const areaPoints = [
-            `${xOf(0)},${yBase}`,
-            ...buckets.map(([, bmap], i) => `${xOf(i)},${yOf(bmap.get(sender) || 0)}`),
-            `${xOf(n - 1)},${yBase}`
-          ].join(" ");
-          svg += `<polygon points="${areaPoints}" fill="${escapeAttr(color)}" opacity="0.07"/>`;
-        }
+          const vals = cumulative.get(sender);
+          const pts = vals.map((v, i) => `${xOf(i)},${yOf(v)}`).join(" ");
+          svg += `<polyline points="${pts}" fill="none" stroke="${escapeAttr(color)}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
 
-        for (let si = 0; si < senders.length; si++) {
-          const color = PALETTE[si % PALETTE.length];
-          const sender = senders[si];
-          // Línea que conecta todos los buckets (incluye ceros → toca la base)
-          const linePoints = buckets.map(([, bmap], i) => `${xOf(i)},${yOf(bmap.get(sender) || 0)}`).join(" ");
-          svg += `<polyline points="${linePoints}" fill="none" stroke="${escapeAttr(color)}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
+          // Marcador en el último punto + etiqueta inline
+          const lastX = xOf(n - 1), lastY = yOf(vals[n - 1]);
+          svg += `<circle cx="${lastX}" cy="${lastY}" r="5" fill="${escapeAttr(color)}"/>`;
+          svg += `<text x="${lastX + 8}" y="${lastY + 4}" class="lc-axis-label" fill="${escapeAttr(color)}" font-weight="800" font-size="11">${escapeHtml(sender.split(" ")[0])}</text>`;
 
-          // Marcadores solo en buckets con valor > 0
-          for (let i = 0; i < buckets.length; i++) {
-            const val = buckets[i][1].get(sender) || 0;
-            if (!val) continue;
-            const x = xOf(i), y = yOf(val);
-            const tooltip = escapeAttr(sender + " · " + bucketLabel(buckets[i][0]) + ": " + formatNumber(val) + " msgs");
-            svg += `<circle cx="${x}" cy="${y}" r="5.5" fill="#090d14" stroke="${escapeAttr(color)}" stroke-width="2.5"><title>${tooltip}</title></circle>`;
-            svg += `<circle cx="${x}" cy="${y}" r="3" fill="${escapeAttr(color)}"><title>${tooltip}</title></circle>`;
+          // Marcador pequeño cada N puntos para orientación
+          const markEvery = Math.max(1, Math.ceil(n / 20));
+          for (let i = 0; i < n - 1; i++) {
+            if (i % markEvery !== 0) continue;
+            const tooltip = escapeAttr(sender + " · " + bucketLabel(buckets[i][0]) + ": " + formatNumber(vals[i]) + " msgs acumulados");
+            svg += `<circle cx="${xOf(i)}" cy="${yOf(vals[i])}" r="3.5" fill="#090d14" stroke="${escapeAttr(color)}" stroke-width="2"><title>${tooltip}</title></circle>`;
           }
         }
 
         svg += `</svg>`;
 
-        // Leyenda
-        const legend = senders.map((s, si) =>
-          `<span class="evo-legend-item"><span class="evo-dot" style="background:${PALETTE[si % PALETTE.length]}"></span>${escapeHtml(s)}</span>`
-        ).join("");
-
-        el.innerHTML = svg + `<div class="evo-legend" style="margin-top:10px">${legend}</div>`;
+        el.innerHTML = svg;
       }
 
       function renderAll() {
@@ -2877,6 +2885,7 @@
       function resetFilters() {
         state.excludedPeople = new Set();
         refs.peopleCheckList.querySelectorAll("input").forEach(cb => cb.checked = true);
+        updatePeopleCount();
         try { localStorage.removeItem(LS_EXCLUDED_KEY); } catch(_) {}
         if (state.messages.length) {
           refs.dateFrom.value = toDateInputValue(state.messages[0].date);
@@ -2972,9 +2981,20 @@
         handleFile(file);
       });
 
+      // Toggle dropdown
+      refs.peopleDdBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        refs.peopleDropdown.classList.toggle("open");
+      });
+      document.addEventListener("click", e => {
+        if (!refs.peopleDropdown.contains(e.target)) refs.peopleDropdown.classList.remove("open");
+      });
+
       refs.peopleAll.addEventListener("click", () => {
         refs.peopleCheckList.querySelectorAll("input").forEach(cb => cb.checked = true);
         state.excludedPeople = new Set();
+        updatePeopleCount();
+        try { localStorage.removeItem(LS_EXCLUDED_KEY); } catch(_) {}
         renderAll();
       });
       refs.peopleNone.addEventListener("click", () => {
