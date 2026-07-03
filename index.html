@@ -304,7 +304,7 @@
       padding-top: 10px;
       overflow: hidden;
       transition: max-height .25s ease, opacity .2s ease, padding-top .25s ease;
-      max-height: 300px;
+      max-height: 500px;
       opacity: 1;
     }
 
@@ -963,8 +963,9 @@
       margin-top: 18px;
     }
 
-    #recordsSection { flex: 3 1 0; min-width: 0; }
+    #recordsSection { flex: 2 1 0; min-width: 0; }
     #hotTopicWeekly { flex: 1 1 0; min-width: 0; }
+    #signaturesSection { flex: 1 1 0; min-width: 0; }
 
     /* ── Récords históricos ──────────────────────────────────────────── */
     .records-grid {
@@ -1083,8 +1084,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      min-width: 180px;
-      max-width: 340px;
+      width: 100%;
     }
 
     .people-filter-head {
@@ -1125,7 +1125,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      max-width: 340px;
+      width: 100%;
     }
 
     .pcb-item {
@@ -1249,7 +1249,7 @@
       .top-grid { grid-template-columns: repeat(2, minmax(210px, 1fr)); }
       .main-grid { grid-template-columns: 1fr; }
       .records-hot-grid { flex-direction: column; }
-      #hotTopicWeekly { flex: 1 1 auto; }
+      #hotTopicWeekly, #signaturesSection { flex: 1 1 auto; }
     }
 
     @media (max-width: 760px) {
@@ -1441,13 +1441,13 @@
           </div>
           <div id="hotTopic"></div>
         </article>
+        <article id="signaturesSection" class="panel">
+          <div class="panel-head"><div><h2>Firma lexica</h2><p>Las palabras mas caracteristicas de cada persona.</p></div></div>
+          <div id="signaturesGrid" class="signature-grid"></div>
+        </article>
       </div><!-- /.records-hot-grid -->
 
       <div class="main-grid">
-        <article id="signaturesSection" class="panel">
-          <div class="panel-head"><div><h2>Firma lexica</h2><p>Las palabras mas caracteristicas de cada persona vs. el resto del grupo.</p></div></div>
-          <div id="signaturesGrid" class="signature-grid"></div>
-        </article>
         <article id="emojiSection" class="panel">
           <div class="panel-head"><div><h2>Ranking de emojis</h2><p>Los mas usados del grupo y quien los manda mas.</p></div></div>
           <div id="emojiList" class="emoji-list"></div>
@@ -2196,19 +2196,26 @@
         if (items.length) select.value = items[items.length - 1].key;
       }
 
+      const LS_EXCLUDED_KEY = "tablero_excluded_people";
+
       function readPeopleFilter() {
         state.excludedPeople = new Set(
           Array.from(refs.peopleCheckList.querySelectorAll("input:not(:checked)")).map(cb => cb.value)
         );
+        try { localStorage.setItem(LS_EXCLUDED_KEY, JSON.stringify([...state.excludedPeople])); } catch(_) {}
       }
 
       function initPeopleFilter(participants) {
-        state.excludedPeople = new Set();
-        refs.peopleCheckList.innerHTML = participants.map(name => `
-          <label class="pcb-item">
-            <input type="checkbox" value="${escapeAttr(name)}" checked />
+        let saved = new Set();
+        try { saved = new Set(JSON.parse(localStorage.getItem(LS_EXCLUDED_KEY) || "[]")); } catch(_) {}
+        state.excludedPeople = new Set([...saved].filter(p => participants.includes(p)));
+        refs.peopleCheckList.innerHTML = participants.map(name => {
+          const checked = !state.excludedPeople.has(name);
+          return `<label class="pcb-item">
+            <input type="checkbox" value="${escapeAttr(name)}" ${checked ? "checked" : ""} />
             <span>${escapeHtml(name)}</span>
-          </label>`).join("");
+          </label>`;
+        }).join("");
         refs.peopleCheckList.addEventListener("change", () => { readPeopleFilter(); renderAll(); });
       }
 
@@ -2630,8 +2637,9 @@
       }
 
       // TF-IDF lift: devuelve las palabras más características de un sender vs el resto
+      const SIG_EXCLUDE = new Set(["omitido", "multimedia", "imagen", "video", "audio", "archivo", "sticker", "eliminado"]);
       function signatureWords(senderMsgs, allMsgs, topN = 3) {
-        const tokenize = text => text.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, " ").split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w));
+        const tokenize = text => text.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, " ").split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w) && !SIG_EXCLUDE.has(w));
         const tfMap = {};
         senderMsgs.forEach(msg => tokenize(msg.text).forEach(w => { tfMap[w] = (tfMap[w] || 0) + 1; }));
         const total = Object.values(tfMap).reduce((a, b) => a + b, 0) || 1;
@@ -2803,19 +2811,21 @@
         }
         svg += `</g>`;
 
-        // Una polyline + puntos por sender
+        // Una polyline + marcadores por sender
         for (let si = 0; si < senders.length; si++) {
           const color = PALETTE[si % PALETTE.length];
           const sender = senders[si];
           const points = buckets.map(([, bmap], i) => `${xOf(i)},${yOf(bmap.get(sender) || 0)}`).join(" ");
-          svg += `<polyline points="${points}" fill="none" stroke="${escapeAttr(color)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
+          svg += `<polyline points="${points}" fill="none" stroke="${escapeAttr(color)}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
 
-          // Puntos interactivos con tooltip
+          // Marcadores: círculo exterior (borde) + interior relleno, todos los buckets
           for (let i = 0; i < buckets.length; i++) {
             const val = buckets[i][1].get(sender) || 0;
-            if (!val) continue;
             const x = xOf(i), y = yOf(val);
-            svg += `<circle cx="${x}" cy="${y}" r="3.5" fill="${escapeAttr(color)}" opacity="0.9"><title>${escapeAttr(sender + " · " + bucketLabel(buckets[i][0]) + ": " + formatNumber(val) + " msgs")}</title></circle>`;
+            const tooltip = escapeAttr(sender + " · " + bucketLabel(buckets[i][0]) + ": " + formatNumber(val) + " msgs");
+            // Borde blanco para contraste + relleno del color
+            svg += `<circle cx="${x}" cy="${y}" r="5.5" fill="#090d14" stroke="${escapeAttr(color)}" stroke-width="2"><title>${tooltip}</title></circle>`;
+            svg += `<circle cx="${x}" cy="${y}" r="3" fill="${escapeAttr(color)}"><title>${tooltip}</title></circle>`;
           }
         }
 
@@ -2852,6 +2862,7 @@
       function resetFilters() {
         state.excludedPeople = new Set();
         refs.peopleCheckList.querySelectorAll("input").forEach(cb => cb.checked = true);
+        try { localStorage.removeItem(LS_EXCLUDED_KEY); } catch(_) {}
         if (state.messages.length) {
           refs.dateFrom.value = toDateInputValue(state.messages[0].date);
           refs.dateTo.value = toDateInputValue(state.messages[state.messages.length - 1].date);
