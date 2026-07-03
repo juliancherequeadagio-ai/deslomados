@@ -958,7 +958,7 @@
     /* ── Records + Hot Topic lado a lado ────────────────────────────── */
     .records-hot-grid {
       display: flex;
-      align-items: flex-start;
+      align-items: stretch;
       gap: 18px;
       margin-top: 18px;
     }
@@ -1122,8 +1122,8 @@
     .people-filter-actions button:hover { background: rgba(255,255,255,.14); color: var(--text); }
 
     .people-check-list {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
       gap: 5px;
       width: 100%;
     }
@@ -1132,8 +1132,8 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      padding: 4px 10px 4px 8px;
-      border-radius: 999px;
+      padding: 5px 10px 5px 8px;
+      border-radius: 8px;
       border: 1px solid var(--border);
       background: rgba(255,255,255,.05);
       cursor: pointer;
@@ -1447,28 +1447,6 @@
         </article>
       </div><!-- /.records-hot-grid -->
 
-      <div class="main-grid">
-        <article id="emojiSection" class="panel">
-          <div class="panel-head"><div><h2>Ranking de emojis</h2><p>Los mas usados del grupo y quien los manda mas.</p></div></div>
-          <div id="emojiList" class="emoji-list"></div>
-        </article>
-      </div>
-
-      <article id="trendsSection" class="panel full">
-        <div class="panel-head"><div><h2>Palabras en tendencia</h2><p>Terminos que mas crecieron en los ultimos 90 dias vs. los 90 anteriores.</p></div></div>
-        <div id="trendGrid" class="trend-grid"></div>
-      </article>
-
-      <article id="evolutionSection" class="panel full">
-        <div class="panel-head">
-          <div>
-            <h2>Evolucion de participacion</h2>
-            <p>Como fue cambiando el peso de cada integrante mes a mes. Top 8 personas por total de mensajes.</p>
-          </div>
-        </div>
-        <div id="evolutionChart"></div>
-      </article>
-
       <article class="panel full" id="lineChartSection">
         <div class="panel-head">
           <div>
@@ -1492,6 +1470,28 @@
           </label>
         </div>
         <div id="lineChart" class="linechart-wrap"></div>
+      </article>
+
+      <div class="main-grid">
+        <article id="emojiSection" class="panel">
+          <div class="panel-head"><div><h2>Ranking de emojis</h2><p>Los mas usados del grupo y quien los manda mas.</p></div></div>
+          <div id="emojiList" class="emoji-list"></div>
+        </article>
+      </div>
+
+      <article id="trendsSection" class="panel full">
+        <div class="panel-head"><div><h2>Palabras en tendencia</h2><p>Terminos que mas crecieron en los ultimos 90 dias vs. los 90 anteriores.</p></div></div>
+        <div id="trendGrid" class="trend-grid"></div>
+      </article>
+
+      <article id="evolutionSection" class="panel full">
+        <div class="panel-head">
+          <div>
+            <h2>Evolucion de participacion</h2>
+            <p>Como fue cambiando el peso de cada integrante mes a mes. Top 8 personas por total de mensajes.</p>
+          </div>
+        </div>
+        <div id="evolutionChart"></div>
       </article>
 
       <div class="main-grid">
@@ -2811,20 +2811,35 @@
         }
         svg += `</g>`;
 
-        // Una polyline + marcadores por sender
+        const yBase = yOf(0); // línea de base Y=0
+
+        // Primero las áreas (atrás), luego las líneas y marcadores (adelante)
         for (let si = 0; si < senders.length; si++) {
           const color = PALETTE[si % PALETTE.length];
           const sender = senders[si];
-          const points = buckets.map(([, bmap], i) => `${xOf(i)},${yOf(bmap.get(sender) || 0)}`).join(" ");
-          svg += `<polyline points="${points}" fill="none" stroke="${escapeAttr(color)}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
+          // Polígono cerrado para el área bajo la curva
+          const areaPoints = [
+            `${xOf(0)},${yBase}`,
+            ...buckets.map(([, bmap], i) => `${xOf(i)},${yOf(bmap.get(sender) || 0)}`),
+            `${xOf(n - 1)},${yBase}`
+          ].join(" ");
+          svg += `<polygon points="${areaPoints}" fill="${escapeAttr(color)}" opacity="0.07"/>`;
+        }
 
-          // Marcadores: círculo exterior (borde) + interior relleno, todos los buckets
+        for (let si = 0; si < senders.length; si++) {
+          const color = PALETTE[si % PALETTE.length];
+          const sender = senders[si];
+          // Línea que conecta todos los buckets (incluye ceros → toca la base)
+          const linePoints = buckets.map(([, bmap], i) => `${xOf(i)},${yOf(bmap.get(sender) || 0)}`).join(" ");
+          svg += `<polyline points="${linePoints}" fill="none" stroke="${escapeAttr(color)}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
+
+          // Marcadores solo en buckets con valor > 0
           for (let i = 0; i < buckets.length; i++) {
             const val = buckets[i][1].get(sender) || 0;
+            if (!val) continue;
             const x = xOf(i), y = yOf(val);
             const tooltip = escapeAttr(sender + " · " + bucketLabel(buckets[i][0]) + ": " + formatNumber(val) + " msgs");
-            // Borde blanco para contraste + relleno del color
-            svg += `<circle cx="${x}" cy="${y}" r="5.5" fill="#090d14" stroke="${escapeAttr(color)}" stroke-width="2"><title>${tooltip}</title></circle>`;
+            svg += `<circle cx="${x}" cy="${y}" r="5.5" fill="#090d14" stroke="${escapeAttr(color)}" stroke-width="2.5"><title>${tooltip}</title></circle>`;
             svg += `<circle cx="${x}" cy="${y}" r="3" fill="${escapeAttr(color)}"><title>${tooltip}</title></circle>`;
           }
         }
