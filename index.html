@@ -618,6 +618,38 @@
       background: var(--accent-3);
     }
 
+    /* ── Line chart ─────────────────────────────────────────────────── */
+    .linechart-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .linechart-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted-2);
+      font-weight: 700;
+    }
+
+    .linechart-label select { width: auto; }
+
+    .linechart-wrap { overflow-x: auto; }
+
+    .linechart-svg {
+      width: 100%;
+      min-width: 360px;
+      display: block;
+      overflow: visible;
+    }
+
+    .lc-gridline { stroke: rgba(255,255,255,.07); stroke-width: 1; }
+    .lc-axis-label { fill: #64748b; font-size: 11px; font-family: inherit; }
+
     /* ── Hot topic tabs ─────────────────────────────────────────────── */
     .hot-topic-controls {
       display: flex;
@@ -1408,6 +1440,31 @@
         <div id="evolutionChart"></div>
       </article>
 
+      <article class="panel full" id="lineChartSection">
+        <div class="panel-head">
+          <div>
+            <h2>Actividad por persona</h2>
+            <p>Mensajes por periodo en el rango filtrado. Una linea por persona.</p>
+          </div>
+        </div>
+        <div class="linechart-controls">
+          <div class="hot-tabs" id="lineGranTabs">
+            <button class="hot-tab active" data-gran="day">Día</button>
+            <button class="hot-tab" data-gran="week">Semana</button>
+            <button class="hot-tab" data-gran="month">Mes</button>
+          </div>
+          <label class="linechart-label">Personas
+            <select id="linePersonLimit">
+              <option value="3">Top 3</option>
+              <option value="5" selected>Top 5</option>
+              <option value="8">Top 8</option>
+              <option value="all">Todas</option>
+            </select>
+          </label>
+        </div>
+        <div id="lineChart" class="linechart-wrap"></div>
+      </article>
+
       <div class="main-grid">
         <article class="panel">
           <h2>Mensajes por persona</h2>
@@ -1490,6 +1547,9 @@
         trendGrid: $("#trendGrid"),
         recordsGrid: $("#recordsGrid"),
         evolutionChart: $("#evolutionChart"),
+        lineGranTabs: $("#lineGranTabs"),
+        linePersonLimit: $("#linePersonLimit"),
+        lineChart: $("#lineChart"),
         personChart: $("#personChart"),
         timelineChart: $("#timelineChart"),
         heatmap: $("#heatmap"),
@@ -2640,6 +2700,119 @@
         refs.trendGrid.innerHTML = card("Palabras en alza 🔥 (últimos 90 días)", rising, true) + card("Palabras en baja 📉", falling, false);
       }
 
+      function activeLineGran() {
+        const btn = refs.lineGranTabs.querySelector(".hot-tab.active");
+        return btn ? btn.dataset.gran : "week";
+      }
+
+      function renderLineChart(messages) {
+        const el = refs.lineChart;
+        if (!messages.length) { el.innerHTML = `<div class="empty">Sin datos.</div>`; return; }
+
+        const gran = activeLineGran();
+
+        // Función de clave temporal según granularidad
+        const bucketKey = date => {
+          if (gran === "day") return date.toISOString().slice(0, 10);
+          if (gran === "month") return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+          // week: lunes de la semana
+          const d = new Date(date); d.setHours(0,0,0,0);
+          const day = d.getDay() || 7; d.setDate(d.getDate() - day + 1);
+          return d.toISOString().slice(0, 10);
+        };
+        const bucketLabel = key => {
+          const d = new Date(key + (gran === "month" ? "-01" : "") + "T00:00:00");
+          if (gran === "year") return String(d.getFullYear());
+          if (gran === "month") return `${monthNames[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`;
+          return `${d.getDate()} ${monthNames[d.getMonth()]}`;
+        };
+
+        // Top senders por total
+        const totalBySender = new Map();
+        for (const msg of messages) totalBySender.set(msg.sender, (totalBySender.get(msg.sender) || 0) + 1);
+        const limitVal = refs.linePersonLimit.value;
+        const limit = limitVal === "all" ? Infinity : Number(limitVal);
+        const senders = Array.from(totalBySender.entries()).sort((a, b) => b[1] - a[1]).slice(0, limit).map(([s]) => s);
+        if (!senders.length) { el.innerHTML = `<div class="empty">Sin datos.</div>`; return; }
+
+        // Armar buckets
+        const bucketSet = new Map();
+        for (const msg of messages) {
+          const k = bucketKey(msg.date);
+          if (!bucketSet.has(k)) bucketSet.set(k, new Map());
+          const b = bucketSet.get(k);
+          b.set(msg.sender, (b.get(msg.sender) || 0) + 1);
+        }
+        const buckets = Array.from(bucketSet.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+        if (buckets.length < 2) { el.innerHTML = `<div class="empty">Se necesitan al menos 2 periodos para trazar el grafico.</div>`; return; }
+
+        // Dimensiones del SVG
+        const W = 900, H = 280, PAD = { top: 16, right: 20, bottom: 36, left: 48 };
+        const innerW = W - PAD.left - PAD.right;
+        const innerH = H - PAD.top - PAD.bottom;
+        const n = buckets.length;
+
+        // Escala X (posición de cada bucket)
+        const xOf = i => PAD.left + (n === 1 ? innerW / 2 : i * innerW / (n - 1));
+
+        // Escala Y
+        let maxVal = 0;
+        for (const [, bmap] of buckets) for (const s of senders) maxVal = Math.max(maxVal, bmap.get(s) || 0);
+        maxVal = maxVal || 1;
+        const yOf = v => PAD.top + innerH - (v / maxVal) * innerH;
+
+        // Ticks Y (4 niveles)
+        const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => Math.round(f * maxVal));
+
+        // Ticks X (máximo ~12 etiquetas)
+        const labelEvery = Math.max(1, Math.ceil(n / 12));
+
+        let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="linechart-svg">`;
+
+        // Grid lines Y
+        svg += `<g class="lc-grid">`;
+        for (const tick of yTicks) {
+          const y = yOf(tick);
+          svg += `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" class="lc-gridline"/>`;
+          svg += `<text x="${PAD.left - 6}" y="${y + 4}" class="lc-axis-label" text-anchor="end">${formatNumber(tick)}</text>`;
+        }
+        svg += `</g>`;
+
+        // Labels X
+        svg += `<g class="lc-xlabels">`;
+        for (let i = 0; i < n; i++) {
+          if (i % labelEvery !== 0 && i !== n - 1) continue;
+          const x = xOf(i);
+          svg += `<text x="${x}" y="${H - 6}" class="lc-axis-label" text-anchor="middle">${escapeHtml(bucketLabel(buckets[i][0]))}</text>`;
+        }
+        svg += `</g>`;
+
+        // Una polyline + puntos por sender
+        for (let si = 0; si < senders.length; si++) {
+          const color = PALETTE[si % PALETTE.length];
+          const sender = senders[si];
+          const points = buckets.map(([, bmap], i) => `${xOf(i)},${yOf(bmap.get(sender) || 0)}`).join(" ");
+          svg += `<polyline points="${points}" fill="none" stroke="${escapeAttr(color)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
+
+          // Puntos interactivos con tooltip
+          for (let i = 0; i < buckets.length; i++) {
+            const val = buckets[i][1].get(sender) || 0;
+            if (!val) continue;
+            const x = xOf(i), y = yOf(val);
+            svg += `<circle cx="${x}" cy="${y}" r="3.5" fill="${escapeAttr(color)}" opacity="0.9"><title>${escapeAttr(sender + " · " + bucketLabel(buckets[i][0]) + ": " + formatNumber(val) + " msgs")}</title></circle>`;
+          }
+        }
+
+        svg += `</svg>`;
+
+        // Leyenda
+        const legend = senders.map((s, si) =>
+          `<span class="evo-legend-item"><span class="evo-dot" style="background:${PALETTE[si % PALETTE.length]}"></span>${escapeHtml(s)}</span>`
+        ).join("");
+
+        el.innerHTML = svg + `<div class="evo-legend" style="margin-top:10px">${legend}</div>`;
+      }
+
       function renderAll() {
         if (!state.messages.length) return;
         const filtered = applyFilters();
@@ -2653,6 +2826,7 @@
         renderPersonalityCards(filtered);
         renderGroupRecords(filtered);
         renderParticipationEvolution(filtered);
+        renderLineChart(filtered);
         renderSignatures(filtered);
         renderEmojiRanking(filtered);
         renderTrends(filtered);
@@ -2784,6 +2958,15 @@
 
       [refs.personFilter, refs.dateFrom, refs.dateTo, refs.groupBy, refs.topLimit].forEach(control => control.addEventListener("change", renderAll));
       [refs.weekSelect, refs.monthSelect, refs.yearSelect].forEach(control => control.addEventListener("change", renderTopCards));
+      refs.lineGranTabs.addEventListener("click", e => {
+        const btn = e.target.closest(".hot-tab");
+        if (!btn) return;
+        refs.lineGranTabs.querySelectorAll(".hot-tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderLineChart(applyFilters());
+      });
+      refs.linePersonLimit.addEventListener("change", () => renderLineChart(applyFilters()));
+
       refs.hotPeriodSelect.addEventListener("change", renderHotTopic);
       refs.hotPeriodTabs.addEventListener("click", e => {
         const btn = e.target.closest(".hot-tab");
