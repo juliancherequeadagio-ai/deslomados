@@ -252,14 +252,60 @@
 
     .controls {
       display: flex;
-      flex-wrap: wrap;
-      align-items: flex-end;
-      gap: 8px 10px;
-      padding: 12px 16px;
+      flex-direction: column;
+      gap: 0;
+      padding: 10px 16px;
       position: sticky;
       top: 12px;
       z-index: 20;
       backdrop-filter: blur(20px);
+    }
+
+    .controls-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .controls-title {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted-2);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .controls-title:hover { color: var(--text); }
+
+    .controls-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .controls-body {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 8px 10px;
+      padding-top: 10px;
+      overflow: hidden;
+      transition: max-height .25s ease, opacity .2s ease, padding-top .25s ease;
+      max-height: 200px;
+      opacity: 1;
+    }
+
+    .controls.collapsed .controls-body {
+      max-height: 0;
+      opacity: 0;
+      padding-top: 0;
+      pointer-events: none;
     }
 
     label {
@@ -314,14 +360,13 @@
     button:hover { transform: translateY(-1px); }
 
     /* Botones dentro de los filtros: compactos y sin flex stretch */
-    .controls button {
+    .controls button, .controls-actions button {
       flex: 0 0 auto;
       min-height: 32px;
       padding: 5px 14px;
       border-radius: 10px;
       font-size: 12px;
       white-space: nowrap;
-      align-self: flex-end;
     }
 
     .btn-primary {
@@ -988,44 +1033,51 @@
     </section>
 
     <section id="dashboard" class="dashboard hidden">
-      <div class="panel controls" aria-label="Filtros del dashboard">
-        <label>Persona
-          <select id="personFilter"><option value="all">Todos</option></select>
-        </label>
-        <label>Desde
-          <input id="dateFrom" type="date" />
-        </label>
-        <label>Hasta
-          <input id="dateTo" type="date" />
-        </label>
-        <label>Agrupar evolucion
-          <select id="groupBy">
-            <option value="week">Semana</option>
-            <option value="day">Dia</option>
-            <option value="month">Mes</option>
-            <option value="year">Anio</option>
-          </select>
-        </label>
-        <label>Ranking
-          <select id="topLimit">
-            <option value="10">Top 10</option>
-            <option value="20" selected>Top 20</option>
-            <option value="50">Top 50</option>
-            <option value="all">Todos</option>
-          </select>
-        </label>
-        <label>Formato fecha
-          <select id="dateFormat">
-            <option value="auto" selected>Auto</option>
-            <option value="dmy">DD/MM/AA</option>
-            <option value="mdy">MM/DD/AA</option>
-          </select>
-        </label>
-        <button id="resetFilters" class="btn-ghost" type="button">Reset</button>
-        <button id="exportCsv" class="btn-primary" type="button">Exportar CSV</button>
-        <button id="jumpHotTopic" class="btn-ghost" type="button" onclick="document.getElementById('hotTopicWeekly').scrollIntoView({behavior: 'smooth', block: 'start'});">Hot topic</button>
-        <button id="changeFileBtn" class="btn-link" type="button">Cambiar chat</button>
-        <input id="fileInputAlt" type="file" accept=".zip,.txt,text/plain,application/zip" style="display:none" />
+      <div class="panel controls" id="controlsPanel" aria-label="Filtros del dashboard">
+        <div class="controls-head">
+          <span class="controls-title" id="toggleFilters">Filtros <span id="toggleArrow">▾</span></span>
+          <div class="controls-actions">
+            <button id="resetFilters" class="btn-ghost" type="button">Reset</button>
+            <button id="jumpHotTopic" class="btn-ghost" type="button" onclick="document.getElementById('hotTopicWeekly').scrollIntoView({behavior:'smooth',block:'start'});">Hot topic</button>
+            <button id="exportCsv" class="btn-primary" type="button">Exportar CSV</button>
+            <button id="changeFileBtn" class="btn-link" type="button">Cambiar chat</button>
+            <input id="fileInputAlt" type="file" accept=".zip,.txt,text/plain,application/zip" style="display:none" />
+          </div>
+        </div>
+        <div class="controls-body" id="controlsBody">
+          <label>Persona
+            <select id="personFilter"><option value="all">Todos</option></select>
+          </label>
+          <label>Desde
+            <input id="dateFrom" type="date" />
+          </label>
+          <label>Hasta
+            <input id="dateTo" type="date" />
+          </label>
+          <label>Agrupar evolucion
+            <select id="groupBy">
+              <option value="week">Semana</option>
+              <option value="day">Dia</option>
+              <option value="month">Mes</option>
+              <option value="year">Anio</option>
+            </select>
+          </label>
+          <label>Ranking
+            <select id="topLimit">
+              <option value="10">Top 10</option>
+              <option value="20" selected>Top 20</option>
+              <option value="50">Top 50</option>
+              <option value="all">Todos</option>
+            </select>
+          </label>
+          <label>Formato fecha
+            <select id="dateFormat">
+              <option value="auto" selected>Auto</option>
+              <option value="dmy">DD/MM/AA</option>
+              <option value="mdy">MM/DD/AA</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       <div class="kpi-grid" id="kpiGrid"></div>
@@ -1149,6 +1201,9 @@
 
       const refs = {
         heroSection: $("#heroSection"),
+        controlsPanel: $("#controlsPanel"),
+        toggleFilters: $("#toggleFilters"),
+        toggleArrow: $("#toggleArrow"),
         dropZone: $("#dropZone"),
         fileInput: $("#fileInput"),
         fileInputAlt: $("#fileInputAlt"),
@@ -2287,6 +2342,10 @@
       refs.fileInput.addEventListener("change", event => handleFile(event.target.files[0]));
       refs.fileInputAlt.addEventListener("change", event => handleFile(event.target.files[0]));
       refs.changeFileBtn.addEventListener("click", () => refs.fileInputAlt.click());
+      refs.toggleFilters.addEventListener("click", () => {
+        const collapsed = refs.controlsPanel.classList.toggle("collapsed");
+        refs.toggleArrow.textContent = collapsed ? "▸" : "▾";
+      });
       refs.dropZone.addEventListener("dragover", event => { event.preventDefault(); refs.dropZone.classList.add("is-over"); });
       refs.dropZone.addEventListener("dragleave", () => refs.dropZone.classList.remove("is-over"));
       refs.dropZone.addEventListener("drop", event => {
