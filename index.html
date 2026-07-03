@@ -997,6 +997,145 @@
       flex: 0 0 auto;
     }
 
+    /* ── Multi-select personas ───────────────────────────────────────── */
+    .people-wrap { position: relative; }
+
+    .people-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      z-index: 200;
+      min-width: 210px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 10px;
+      background: rgba(9, 13, 20, .98);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .55);
+      display: none;
+    }
+
+    .people-panel.open { display: block; }
+
+    .people-actions {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .people-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .people-check:hover { background: rgba(255, 255, 255, .07); }
+
+    .people-check input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 14px;
+      height: 14px;
+      min-height: auto;
+      padding: 0;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .people-check span {
+      font-size: 13px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+
+    /* ── Firma léxica ────────────────────────────────────────────────── */
+    .signature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .signature-card {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .signature-name {
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .signature-words { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    .sig-word { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+    .sig-word:nth-child(1) { background: rgba(157, 248, 113, .15); color: var(--accent); }
+    .sig-word:nth-child(2) { background: rgba(94, 234, 212, .12); color: var(--accent-2); }
+    .sig-word:nth-child(3) { background: rgba(248, 214, 109, .12); color: var(--accent-3); }
+
+    /* ── Firma léxica (cards nuevas) ────────────────────────────────── */
+    .sig-card {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+    }
+    .sig-name { font-size: 13px; font-weight: 900; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sig-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .sig-tag { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; background: rgba(157,248,113,.13); color: var(--accent); }
+    .sig-tag:nth-child(2) { background: rgba(94,234,212,.1); color: var(--accent-2); }
+    .sig-tag:nth-child(3) { background: rgba(248,214,109,.1); color: var(--accent-3); }
+
+    /* ── Emoji ranking ───────────────────────────────────────────────── */
+    .emoji-list { display: grid; gap: 6px; margin-top: 14px; }
+
+    .emoji-row {
+      display: grid;
+      grid-template-columns: 28px 28px 1fr 52px;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .07);
+    }
+
+    .emoji-rank { font-size: 11px; color: var(--muted-2); font-weight: 700; text-align: right; }
+    .emoji-glyph { font-size: 20px; text-align: center; line-height: 1; }
+    .emoji-bar-wrap { height: 8px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; }
+    .emoji-bar { height: 100%; background: var(--accent); border-radius: 4px; }
+    .emoji-cnt { font-size: 13px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; text-align: right; }
+
+    /* ── Tendencias ──────────────────────────────────────────────────── */
+    .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+    @media (max-width: 700px) { .trend-grid { grid-template-columns: 1fr; } }
+
+    .trend-card { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+    .trend-label { font-size: 13px; font-weight: 900; margin-bottom: 10px; }
+    .trend-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .trend-row:last-child { border-bottom: none; }
+    .trend-word { font-size: 13px; font-weight: 700; }
+    .trend-arrow { font-size: 14px; }
+    .trend-arrow.up { color: var(--accent); }
+    .trend-arrow.down { color: var(--danger); }
+    .trend-lift { font-size: 12px; font-weight: 800; color: var(--muted-2); min-width: 42px; text-align: right; }
+    .trend-cnt { font-size: 11px; color: var(--muted-2); min-width: 56px; text-align: right; }
+
     @media (max-width: 1120px) {
       .controls { position: static; }
       .kpi-grid { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
@@ -1019,6 +1158,16 @@
       .bar-val { text-align: left; }
       .panel { padding: 16px; }
       .heatmap { grid-template-columns: 64px repeat(24, 18px); }
+    }
+
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      #controlsPanel, #heroSection, .controls { display: none !important; }
+      body { background: #090d14 !important; }
+      #dashboard { padding-top: 0 !important; }
+      .shell { width: 100% !important; }
+      .panel { break-inside: avoid; }
+      .people-panel { display: none !important; }
     }
   </style>
 </head>
@@ -1061,14 +1210,22 @@
             <button id="resetFilters" class="btn-ghost" type="button">Reset</button>
             <button id="jumpHotTopic" class="btn-ghost" type="button" onclick="document.getElementById('hotTopicWeekly').scrollIntoView({behavior:'smooth',block:'start'});">Hot topic</button>
             <button id="exportCsv" class="btn-primary" type="button">Exportar CSV</button>
+            <button id="exportPdf" class="btn-ghost" type="button">📄 PDF</button>
             <button id="changeFileBtn" class="btn-link" type="button">Cambiar chat</button>
             <input id="fileInputAlt" type="file" accept=".zip,.txt,text/plain,application/zip" style="display:none" />
           </div>
         </div>
         <div class="controls-body" id="controlsBody">
-          <label>Persona
-            <select id="personFilter"><option value="all">Todos</option></select>
-          </label>
+          <div class="people-wrap">
+            <button id="peoplePanelBtn" class="btn-ghost" type="button">Participantes: <span id="peopleCount">todos</span></button>
+            <div id="peoplePanel" class="people-panel">
+              <div class="people-actions">
+                <button id="peopleAll" class="btn-ghost" type="button">Todos</button>
+                <button id="peopleNone" class="btn-ghost" type="button">Ninguno</button>
+              </div>
+              <div id="peopleList"></div>
+            </div>
+          </div>
           <label>Desde
             <input id="dateFrom" type="date" />
           </label>
@@ -1149,6 +1306,22 @@
       </article>
 
       <div class="main-grid">
+        <article id="signaturesSection" class="panel">
+          <div class="panel-head"><div><h2>Firma lexica</h2><p>Las palabras mas caracteristicas de cada persona vs. el resto del grupo.</p></div></div>
+          <div id="signaturesGrid" class="signature-grid"></div>
+        </article>
+        <article id="emojiSection" class="panel">
+          <div class="panel-head"><div><h2>Ranking de emojis</h2><p>Los mas usados del grupo y quien los manda mas.</p></div></div>
+          <div id="emojiList" class="emoji-list"></div>
+        </article>
+      </div>
+
+      <article id="trendsSection" class="panel full">
+        <div class="panel-head"><div><h2>Palabras en tendencia</h2><p>Terminos que mas crecieron en los ultimos 90 dias vs. los 90 anteriores.</p></div></div>
+        <div id="trendGrid" class="trend-grid"></div>
+      </article>
+
+      <div class="main-grid">
         <article id="recordsSection" class="panel">
           <div class="panel-head">
             <div>
@@ -1216,7 +1389,8 @@
         fileName: "",
         textFileName: "",
         inferredOrder: "dmy",
-        periods: { week: [], month: [], year: [] }
+        periods: { week: [], month: [], year: [] },
+        excludedPeople: new Set()
       };
 
       const $ = (selector, root = document) => root.querySelector(selector);
@@ -1233,7 +1407,12 @@
         changeFileBtn: $("#changeFileBtn"),
         status: $("#status"),
         dashboard: $("#dashboard"),
-        personFilter: $("#personFilter"),
+        peoplePanelBtn: $("#peoplePanelBtn"),
+        peoplePanel: $("#peoplePanel"),
+        peopleList: $("#peopleList"),
+        peopleCount: $("#peopleCount"),
+        peopleAll: $("#peopleAll"),
+        peopleNone: $("#peopleNone"),
         dateFrom: $("#dateFrom"),
         dateTo: $("#dateTo"),
         groupBy: $("#groupBy"),
@@ -1241,6 +1420,7 @@
         dateFormat: $("#dateFormat"),
         resetFilters: $("#resetFilters"),
         exportCsv: $("#exportCsv"),
+        exportPdf: $("#exportPdf"),
         kpiGrid: $("#kpiGrid"),
         weekSelect: $("#weekSelect"),
         monthSelect: $("#monthSelect"),
@@ -1252,6 +1432,9 @@
         topYearCard: $("#topYearCard"),
         topHistoryCard: $("#topHistoryCard"),
         personalityGrid: $("#personalityGrid"),
+        signaturesGrid: $("#signaturesGrid"),
+        emojiList: $("#emojiList"),
+        trendGrid: $("#trendGrid"),
         recordsGrid: $("#recordsGrid"),
         evolutionChart: $("#evolutionChart"),
         personChart: $("#personChart"),
@@ -1805,12 +1988,11 @@
 
       function renderHotTopic() {
         const key = refs.hotWeekSelect.value;
-        const person = refs.personFilter.value;
         if (!key) {
           refs.hotTopic.innerHTML = `<div class="empty">Cargá un chat para calcular el hot topic semanal.</div>`;
           return;
         }
-        const scopedMessages = state.messages.filter(msg => person === "all" || msg.sender === person);
+        const scopedMessages = state.messages.filter(msg => state.excludedPeople.size === 0 || !state.excludedPeople.has(msg.sender));
         const weekMessages = scopedMessages.filter(msg => periodKey(msg.date, "week") === key);
         if (!weekMessages.length) {
           refs.hotTopic.innerHTML = `<div class="empty">No hay mensajes en esa semana para el filtro actual.</div>`;
@@ -1837,10 +2019,9 @@
       }
 
       function applyFilters() {
-        const person = refs.personFilter.value;
         const start = refs.dateFrom.value ? new Date(refs.dateFrom.value + "T00:00:00").getTime() : -Infinity;
         const end = refs.dateTo.value ? new Date(refs.dateTo.value + "T23:59:59.999").getTime() : Infinity;
-        return state.messages.filter(msg => msg.ts >= start && msg.ts <= end && (person === "all" || msg.sender === person));
+        return state.messages.filter(msg => msg.ts >= start && msg.ts <= end && (state.excludedPeople.size === 0 || !state.excludedPeople.has(msg.sender)));
       }
 
       function buildPeriodSelectors() {
@@ -1870,9 +2051,35 @@
         if (items.length) select.value = items[items.length - 1].key;
       }
 
+      function updatePeopleCount() {
+        const total = refs.peopleList.querySelectorAll("input").length;
+        const checked = refs.peopleList.querySelectorAll("input:checked").length;
+        refs.peopleCount.textContent = checked === total ? "todos" : `${checked}/${total}`;
+      }
+
+      function initPeopleFilter(participants) {
+        state.excludedPeople = new Set();
+        refs.peopleList.innerHTML = participants.map(name => `
+          <label class="people-check">
+            <input type="checkbox" value="${escapeAttr(name)}" checked />
+            <span title="${escapeAttr(name)}">${escapeHtml(name)}</span>
+          </label>
+        `).join("");
+        updatePeopleCount();
+        refs.peopleList.querySelectorAll("input[type=checkbox]").forEach(cb => {
+          cb.addEventListener("change", () => {
+            state.excludedPeople = new Set(
+              Array.from(refs.peopleList.querySelectorAll("input:not(:checked)")).map(el => el.value)
+            );
+            updatePeopleCount();
+            renderAll();
+          });
+        });
+      }
+
       function initFilters() {
         const participants = aggregateBySender(state.messages).map(item => item.sender).sort((a, b) => a.localeCompare(b));
-        refs.personFilter.innerHTML = `<option value="all">Todos</option>` + participants.map(name => `<option value="${escapeAttr(name)}">${escapeHtml(name)}</option>`).join("");
+        initPeopleFilter(participants);
         if (state.messages.length) {
           refs.dateFrom.value = toDateInputValue(state.messages[0].date);
           refs.dateTo.value = toDateInputValue(state.messages[state.messages.length - 1].date);
@@ -2041,7 +2248,7 @@
 
         for (const msg of messages) {
           if (!sd.has(msg.sender)) {
-            sd.set(msg.sender, { sender: msg.sender, total: 0, night: 0, questions: 0, words: 0, activeDays: new Set(), maxConsecutive: 0, groupStarter: 0 });
+            sd.set(msg.sender, { sender: msg.sender, total: 0, night: 0, questions: 0, words: 0, activeDays: new Set(), maxConsecutive: 0, groupStarter: 0, workHours: 0, mediaCount: 0 });
           }
           const s = sd.get(msg.sender);
           s.total++;
@@ -2049,6 +2256,9 @@
           if (msg.date.getHours() < 6) s.night++;
           if (/\?/.test(msg.text)) s.questions++;
           s.activeDays.add(dayKey(msg.date));
+          const dow = msg.date.getDay(), h = msg.date.getHours();
+          if (dow >= 1 && dow <= 5 && h >= 9 && h < 18) s.workHours++;
+          if (msg.isMedia) s.mediaCount++;
         }
 
         // Racha máxima de mensajes consecutivos del mismo sender
@@ -2102,7 +2312,7 @@
           ? arr.reduce((b, s) => (desc ? s[key] > b[key] : s[key] < b[key]) ? s : b)
           : null;
 
-        const withAvg = qualified.map(s => ({ ...s, avgWords: s.total ? s.words / s.total : 0 }));
+        const withAvg = qualified.map(s => ({ ...s, avgWords: s.total ? s.words / s.total : 0, workRatio: s.total ? s.workHours / s.total : 0, mediaRatio: s.total ? s.mediaCount / s.total : 0 }));
 
         const monologuista = win(qualified, "maxConsecutive");
         const insomne      = win(qualified, "night");
@@ -2122,6 +2332,14 @@
         if (telegraf) results.push({ emoji: "📨", title: "El telegrafista", name: telegraf.sender, stat: `${telegraf.avgWords.toFixed(1)} palabras por mensaje`, desc: "economiza palabras al maximo" });
         if (poeta && (!telegraf || poeta.sender !== telegraf.sender)) results.push({ emoji: "📜", title: "El poeta", name: poeta.sender, stat: `${poeta.avgWords.toFixed(1)} palabras por mensaje`, desc: "escribe parrafos enteros" });
         if (queceba && queceba.groupStarter > 0) results.push({ emoji: "🎯", title: "El que ceba el grupo", name: queceba.sender, stat: `${formatNumber(queceba.groupStarter)} veces rompio el silencio`, desc: "siempre empieza la conversacion" });
+
+        const trabajadorPool = withAvg.filter(s => s.workHours >= 10);
+        const trabajador = trabajadorPool.length ? win(trabajadorPool, "workRatio") : null;
+        if (trabajador) results.push({ emoji: "💼", title: "El trabajador", name: trabajador.sender, stat: `${(trabajador.workRatio * 100).toFixed(0)}% de msgs en horario laboral`, desc: "chatea mas en horario de oficina" });
+
+        const multimediaPool = withAvg.filter(s => s.mediaCount >= 5);
+        const multimedia = multimediaPool.length ? win(multimediaPool, "mediaRatio") : null;
+        if (multimedia) results.push({ emoji: "📸", title: "El multimedia", name: multimedia.sender, stat: `${(multimedia.mediaRatio * 100).toFixed(0)}% de sus msgs son multimedia`, desc: "dice mas con imagenes que con palabras" });
 
         return results;
       }
@@ -2276,6 +2494,93 @@
         renderTopCard(refs.topHistoryCard, topFor("all"));
       }
 
+      // TF-IDF lift: devuelve las palabras más características de un sender vs el resto
+      function signatureWords(senderMsgs, allMsgs, topN = 3) {
+        const tokenize = text => text.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, " ").split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w));
+        const tfMap = {};
+        senderMsgs.forEach(msg => tokenize(msg.text).forEach(w => { tfMap[w] = (tfMap[w] || 0) + 1; }));
+        const total = Object.values(tfMap).reduce((a, b) => a + b, 0) || 1;
+        const allFreq = {};
+        allMsgs.forEach(msg => tokenize(msg.text).forEach(w => { allFreq[w] = (allFreq[w] || 0) + 1; }));
+        const allTotal = Object.values(allFreq).reduce((a, b) => a + b, 0) || 1;
+        return Object.entries(tfMap)
+          .map(([w, cnt]) => {
+            const tf = cnt / total;
+            const idf = Math.log((allTotal + 1) / ((allFreq[w] || 0) + 1));
+            return { w, score: tf * idf, cnt };
+          })
+          .sort((a, b) => b.score - a.score)
+          .slice(0, topN);
+      }
+
+      function renderSignatures(messages) {
+        if (!refs.signaturesGrid) return;
+        const senders = aggregateBySender(messages).slice(0, 8);
+        if (!senders.length) { refs.signaturesGrid.innerHTML = `<div class="empty">Sin datos.</div>`; return; }
+        refs.signaturesGrid.innerHTML = senders.map(s => {
+          const mine = messages.filter(m => m.sender === s.sender);
+          const words = signatureWords(mine, messages, 3);
+          const tags = words.map(({w, cnt}) => `<span class="sig-tag" title="${cnt} veces">${escapeHtml(w)}</span>`).join("");
+          return `<div class="sig-card"><div class="sig-name" title="${escapeAttr(s.sender)}">${escapeHtml(s.sender)}</div><div class="sig-tags">${tags}</div></div>`;
+        }).join("");
+      }
+
+      function renderEmojiRanking(messages) {
+        if (!refs.emojiList) return;
+        const EMOJI_RE = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu;
+        const freq = {};
+        messages.forEach(msg => {
+          const found = msg.text.match(EMOJI_RE) || [];
+          found.forEach(e => { freq[e] = (freq[e] || 0) + 1; });
+        });
+        const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 15);
+        if (!sorted.length) { refs.emojiList.innerHTML = `<div class="empty">No hay emojis en el período.</div>`; return; }
+        const max = sorted[0][1] || 1;
+        refs.emojiList.innerHTML = sorted.map(([emoji, cnt], i) => `
+          <div class="emoji-row">
+            <span class="emoji-rank">#${i + 1}</span>
+            <span class="emoji-glyph">${emoji}</span>
+            <div class="emoji-bar-wrap"><div class="emoji-bar" style="width:${Math.max(4, cnt * 100 / max)}%"></div></div>
+            <span class="emoji-cnt">${formatNumber(cnt)}</span>
+          </div>`).join("");
+      }
+
+      function renderTrends(messages) {
+        if (!refs.trendGrid) return;
+        const now = messages.length ? messages[messages.length - 1].date : new Date();
+        const cutNew = new Date(now); cutNew.setDate(cutNew.getDate() - 90);
+        const cutOld = new Date(cutNew); cutOld.setDate(cutOld.getDate() - 90);
+        const newMsgs = messages.filter(m => m.date >= cutNew);
+        const oldMsgs = messages.filter(m => m.date >= cutOld && m.date < cutNew);
+        if (!newMsgs.length || !oldMsgs.length) {
+          refs.trendGrid.innerHTML = `<div class="empty">Se necesitan al menos 180 dias de historial para calcular tendencias.</div>`;
+          return;
+        }
+        const count = (msgs) => {
+          const f = {};
+          msgs.forEach(msg => msg.text.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, " ").split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w)).forEach(w => { f[w] = (f[w] || 0) + 1; }));
+          return f;
+        };
+        const newF = count(newMsgs);
+        const oldF = count(oldMsgs);
+        const nTotal = newMsgs.length || 1;
+        const oTotal = oldMsgs.length || 1;
+        const candidates = Object.keys(newF).filter(w => newF[w] >= 3);
+        const scored = candidates.map(w => {
+          const nr = newF[w] / nTotal;
+          const or = (oldF[w] || 0) / oTotal;
+          return { w, lift: or > 0 ? nr / or : nr * 10, newCnt: newF[w], oldCnt: oldF[w] || 0 };
+        }).sort((a, b) => b.lift - a.lift);
+        const rising = scored.slice(0, 8);
+        const falling = scored.slice(-8).reverse().filter(x => x.oldCnt > 0 && x.lift < 1);
+        const card = (label, items, up) => {
+          if (!items.length) return `<div class="trend-card"><div class="trend-label">${label}</div><div class="empty">Sin datos.</div></div>`;
+          const rows = items.map(x => `<div class="trend-row"><span class="trend-word">${escapeHtml(x.w)}</span><span class="trend-arrow ${up ? "up" : "down"}">${up ? "↑" : "↓"}</span><span class="trend-lift">${up ? "+" : ""}${((x.lift - 1) * 100).toFixed(0)}%</span><span class="trend-cnt">${formatNumber(x.newCnt)} usos</span></div>`).join("");
+          return `<div class="trend-card"><div class="trend-label">${label}</div>${rows}</div>`;
+        };
+        refs.trendGrid.innerHTML = card("Palabras en alza 🔥 (últimos 90 días)", rising, true) + card("Palabras en baja 📉", falling, false);
+      }
+
       function renderAll() {
         if (!state.messages.length) return;
         const filtered = applyFilters();
@@ -2289,11 +2594,16 @@
         renderPersonalityCards(filtered);
         renderGroupRecords(filtered);
         renderParticipationEvolution(filtered);
+        renderSignatures(filtered);
+        renderEmojiRanking(filtered);
+        renderTrends(filtered);
         refs.fileSummary.textContent = `${state.fileName} | TXT: ${state.textFileName} | ${formatNumber(state.messages.length)} mensajes parseados | ${formatNumber(state.systemLines)} eventos del sistema ignorados | formato detectado: ${state.inferredOrder.toUpperCase()}`;
       }
 
       function resetFilters() {
-        refs.personFilter.value = "all";
+        state.excludedPeople = new Set();
+        refs.peopleList.querySelectorAll("input").forEach(cb => cb.checked = true);
+        updatePeopleCount();
         if (state.messages.length) {
           refs.dateFrom.value = toDateInputValue(state.messages[0].date);
           refs.dateTo.value = toDateInputValue(state.messages[state.messages.length - 1].date);
@@ -2388,11 +2698,46 @@
         handleFile(file);
       });
 
+      // People panel: toggle, outside-click close, all/none buttons
+      refs.peoplePanelBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        refs.peoplePanel.classList.toggle("open");
+      });
+      document.addEventListener("click", e => {
+        if (!refs.peoplePanel.contains(e.target) && e.target !== refs.peoplePanelBtn) {
+          refs.peoplePanel.classList.remove("open");
+        }
+      });
+      refs.peopleAll.addEventListener("click", () => {
+        refs.peopleList.querySelectorAll("input").forEach(cb => cb.checked = true);
+        state.excludedPeople = new Set();
+        updatePeopleCount();
+        renderAll();
+      });
+      refs.peopleNone.addEventListener("click", () => {
+        refs.peopleList.querySelectorAll("input").forEach(cb => cb.checked = false);
+        state.excludedPeople = new Set(
+          Array.from(refs.peopleList.querySelectorAll("input")).map(el => el.value)
+        );
+        updatePeopleCount();
+        renderAll();
+      });
+
       [refs.personFilter, refs.dateFrom, refs.dateTo, refs.groupBy, refs.topLimit].forEach(control => control.addEventListener("change", renderAll));
       [refs.weekSelect, refs.monthSelect, refs.yearSelect].forEach(control => control.addEventListener("change", renderTopCards));
       refs.hotWeekSelect.addEventListener("change", renderHotTopic);
       refs.resetFilters.addEventListener("click", resetFilters);
       refs.exportCsv.addEventListener("click", exportCsv);
+      refs.exportPdf.addEventListener("click", () => {
+        // Oculta la barra de controles y resetea el padding para el print
+        refs.controlsPanel.style.display = "none";
+        const prevPadding = refs.dashboard.style.paddingTop;
+        refs.dashboard.style.paddingTop = "0";
+        window.print();
+        // Restaura después del diálogo de impresión
+        refs.controlsPanel.style.display = "";
+        refs.dashboard.style.paddingTop = prevPadding;
+      });
       refs.dateFormat.addEventListener("change", () => {
         if (refs.fileInput.files[0]) handleFile(refs.fileInput.files[0]);
       });
