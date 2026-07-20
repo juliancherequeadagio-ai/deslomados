@@ -1718,7 +1718,9 @@
       // Ejecuta fn tras un frame para que el spinner sea visible antes del trabajo pesado
       function withLoading(msg, fn) {
         showLoading(msg);
-        requestAnimationFrame(() => setTimeout(() => { fn(); hideLoading(); }, 16));
+        requestAnimationFrame(() => setTimeout(() => {
+          try { fn(); } catch (e) { console.error(e); } finally { hideLoading(); }
+        }, 16));
       }
 
       function formatNumber(value) {
@@ -2698,7 +2700,7 @@
         const allSenders = [...new Set(messages.map(m => m.sender))];
         const firstNameRe = allSenders.map(s => {
           const first = s.split(/[\s_\-]+/)[0].toLowerCase();
-          return first.length > 2 ? { sender: s, first, re: new RegExp(`\\b${first}\\b`, 'i') } : null;
+          return first.length > 2 ? { sender: s, first, re: new RegExp(`\\b${escapeRegExp(first)}\\b`, 'i') } : null;
         }).filter(Boolean);
         const mentionCount = new Map(allSenders.map(s => [s, 0]));
         for (const msg of messages) {
@@ -3099,10 +3101,16 @@
           refs.dashboard.classList.remove("hidden");
           showLoading("Generando dashboard...");
           requestAnimationFrame(() => setTimeout(() => {
-            renderAll();
-            hideLoading();
-            requestAnimationFrame(syncDashboardPadding);
-            showStatus(`Listo: ${formatNumber(state.messages.length)} mensajes cargados de ${formatNumber(aggregateBySender(state.messages).length)} personas.`, "ok");
+            try {
+              renderAll();
+              requestAnimationFrame(syncDashboardPadding);
+              showStatus(`Listo: ${formatNumber(state.messages.length)} mensajes cargados de ${formatNumber(aggregateBySender(state.messages).length)} personas.`, "ok");
+            } catch (e) {
+              console.error(e);
+              showStatus(e.message || "Error al generar el dashboard.", "err");
+            } finally {
+              hideLoading();
+            }
           }, 16));
         } catch (error) {
           console.error(error);
