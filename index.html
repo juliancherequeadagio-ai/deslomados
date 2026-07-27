@@ -1269,9 +1269,12 @@
     }
     .sig-name { font-size: 13px; font-weight: 900; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sig-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-    .sig-tag { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; background: rgba(157,248,113,.13); color: var(--accent); }
+    .sig-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; background: rgba(157,248,113,.13); color: var(--accent); }
     .sig-tag:nth-child(2) { background: rgba(94,234,212,.1); color: var(--accent-2); }
     .sig-tag:nth-child(3) { background: rgba(248,214,109,.1); color: var(--accent-3); }
+    .sig-tag:nth-child(n+4) { background: rgba(255,255,255,.07); color: var(--muted); }
+    .sig-cnt { font-size: 10px; font-weight: 700; opacity: .5; }
+    .sig-empty { font-size: 11px; color: var(--muted-2); font-style: italic; }
 
     /* ── Emoji ranking ───────────────────────────────────────────────── */
     .emoji-list { display: grid; gap: 6px; margin-top: 14px; }
@@ -1672,7 +1675,16 @@
       const dayNames = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
       const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
       const STOP_WORDS = new Set([
-        "ahi", "algo", "algun", "alguna", "algunas", "alguno", "algunos", "alla", "alli", "ante", "antes", "aquel", "aquella", "aquellas", "aquello", "aquellos", "aqui", "asi", "cada", "casi", "como", "con", "cual", "cuales", "cuando", "cuanto", "cuantos", "del", "desde", "donde", "dos", "ese", "esa", "esas", "eso", "esos", "esta", "estas", "este", "esto", "estos", "fue", "han", "hay", "hoy", "jaja", "jajaj", "jajaja", "jajajaja", "jajajajaj", "jajajajaja", "jajajajajaja", "las", "les", "los", "mas", "menos", "muy", "nada", "nos", "para", "pero", "por", "porque", "pues", "que", "quien", "sin", "son", "sus", "tambien", "tan", "tanto", "tenes", "tengo", "tiene", "tienen", "todo", "todos", "tus", "una", "uno", "unos", "ustedes", "vos", "voy", "whatsapp"
+        // preposiciones, artículos, pronombres y nexos básicos
+        "ahi", "algo", "algun", "alguna", "algunas", "alguno", "algunos", "alla", "alli", "ante", "antes", "aquel", "aquella", "aquellas", "aquello", "aquellos", "aqui", "asi", "cada", "casi", "como", "con", "cual", "cuales", "cuando", "cuanto", "cuantos", "del", "desde", "donde", "dos", "ese", "esa", "esas", "eso", "esos", "esta", "estas", "este", "esto", "estos", "fue", "han", "hay", "hoy", "jaja", "jajaj", "jajaja", "jajajaja", "jajajajaj", "jajajajaja", "jajajajajaja", "las", "les", "los", "mas", "menos", "muy", "nada", "nos", "para", "pero", "por", "porque", "pues", "que", "quien", "sin", "son", "sus", "tambien", "tan", "tanto", "tenes", "tengo", "tiene", "tienen", "todo", "todos", "tus", "una", "uno", "unos", "ustedes", "vos", "voy", "whatsapp",
+        // verbos comunes sin carga semántica distintiva
+        "creo", "deja", "dejo", "dice", "digo", "dicho", "estan", "estar", "estoy", "estaba", "estuve", "hace", "hago", "hice", "habia", "habian", "hacia", "pueden", "puede", "puedo", "queda", "quiero", "quiere", "quieren", "sabes", "saben", "sera", "seria", "somos", "suele", "tenia", "vamo", "vamos", "viene", "visto", "segun",
+        // adverbios, adjetivos y muletillas del español rioplatense
+        "ahora", "bien", "buen", "bueno", "buena", "buenas", "claro", "dale", "igual", "jeje", "jiji", "luego", "misma", "mismo", "mucho", "mucha", "muchos", "muchas", "nomas", "nunca", "obvio", "okey", "okay", "otra", "otro", "otras", "otros", "recien", "seguro", "siempre", "solo", "sola",
+        // saludos y relleno frecuente en WhatsApp
+        "foto", "fotos", "gente", "gracias", "hola", "hora", "link", "mano",
+        // fragmentos de URLs (la normalización elimina ://, pero quedan estos tokens)
+        "http", "https"
       ]);
       const PALETTE = [
         "#9df871", "#5eead4", "#f8d66d", "#f87171",
@@ -2826,8 +2838,19 @@
       // TF-IDF lift: devuelve las palabras más características de un sender vs el resto
       const SIG_EXCLUDE = new Set(["omitido", "multimedia", "imagen", "video", "audio", "archivo", "sticker", "eliminado"]);
       const INSULTS = new Set(["boludo","boluda","pelotudo","pelotuda","forro","forra","hdp","mierda","tarado","tarada","gil","soreta","pajero","pajera","cagon","cagona","idiota","imbecil","estupido","estupida","inutil","caradura","mogolico","mogolica","pelotudes","boludeces","boludez","gilada"]);
-      function signatureWords(senderMsgs, allMsgs, topN = 3) {
-        const tokenize = text => text.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, " ").split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w) && !SIG_EXCLUDE.has(w));
+      function signatureWords(senderMsgs, allMsgs, topN = 5) {
+        const tokenize = text => {
+          // Stripear URLs antes de tokenizar para que "https", "www", "com", etc. no aparezcan.
+          const cleaned = text.toLowerCase()
+            .replace(/https?:\/\/\S+|www\.\S+/g, " ")
+            .replace(/[^a-záéíóúüñ\s]/gi, " ");
+          return cleaned.split(/\s+/).filter(w => {
+            if (w.length <= 3) return false;
+            // Normalizar acentos para que "también" matchee "tambien" en STOP_WORDS.
+            const norm = w.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return !STOP_WORDS.has(norm) && !SIG_EXCLUDE.has(norm);
+          });
+        };
         const tfMap = {};
         senderMsgs.forEach(msg => tokenize(msg.text).forEach(w => { tfMap[w] = (tfMap[w] || 0) + 1; }));
         const total = Object.values(tfMap).reduce((a, b) => a + b, 0) || 1;
@@ -2846,13 +2869,15 @@
 
       function renderSignatures(messages) {
         if (!refs.signaturesGrid) return;
-        const senders = aggregateBySender(messages).slice(0, 8);
+        const senders = aggregateBySender(messages).slice(0, 10);
         if (!senders.length) { refs.signaturesGrid.innerHTML = `<div class="empty">Sin datos.</div>`; return; }
         refs.signaturesGrid.innerHTML = senders.map(s => {
           const mine = messages.filter(m => m.sender === s.sender);
-          const words = signatureWords(mine, messages, 3);
-          const tags = words.map(({w, cnt}) => `<span class="sig-tag" title="${cnt} veces">${escapeHtml(w)}</span>`).join("");
-          return `<div class="sig-card"><div class="sig-name" title="${escapeAttr(s.sender)}">${escapeHtml(s.sender)}</div><div class="sig-tags">${tags}</div></div>`;
+          const words = signatureWords(mine, messages, 5);
+          const tags = words.map(({w, cnt}) =>
+            `<span class="sig-tag">${escapeHtml(w)}<span class="sig-cnt">×${cnt}</span></span>`
+          ).join("");
+          return `<div class="sig-card"><div class="sig-name" title="${escapeAttr(s.sender)}">${escapeHtml(s.sender)}</div><div class="sig-tags">${tags || '<span class="sig-empty">sin datos</span>'}</div></div>`;
         }).join("");
       }
 
