@@ -1595,6 +1595,10 @@
     (() => {
       "use strict";
 
+      // Guardamos el último File procesado para poder re-parsear cuando el usuario
+      // cambia el formato de fecha sin necesidad de volver a seleccionar el archivo.
+      let lastFile = null;
+
       const state = {
         messages: [],
         systemLines: 0,
@@ -1719,7 +1723,7 @@
       function withLoading(msg, fn) {
         showLoading(msg);
         requestAnimationFrame(() => setTimeout(() => {
-          try { fn(); } catch (e) { console.error(e); } finally { hideLoading(); }
+          try { fn(); } catch (e) { console.error(e); showStatus('Error al procesar el archivo. Revisá la consola para más detalles.', 'err'); } finally { hideLoading(); }
         }, 16));
       }
 
@@ -1767,7 +1771,10 @@
       }
 
       function decodeZipName(bytes, flags) {
-        const decoder = new TextDecoder((flags & 0x0800) ? "utf-8" : "utf-8", { fatal: false });
+        // Bit 11 (0x0800) del flag indica que el nombre usa UTF-8 (EFS flag del spec ZIP).
+        // Si el bit no está, el nombre está en la codepage legacy (CP437 / DOS Latin US),
+        // que era el default antes de que el spec adoptara Unicode.
+        const decoder = new TextDecoder((flags & 0x0800) ? "utf-8" : "cp437", { fatal: false });
         return decoder.decode(bytes);
       }
 
@@ -3078,6 +3085,7 @@
 
       async function handleFile(file) {
         if (!file) return;
+        lastFile = file; // persiste para re-parsear al cambiar formato de fecha
         try {
           refs.dashboard.classList.add("hidden");
           showStatus("Leyendo archivo...", "");
@@ -3208,7 +3216,9 @@
         refs.dashboard.style.paddingTop = prevPadding;
       });
       refs.dateFormat.addEventListener("change", () => {
-        if (refs.fileInput.files[0]) handleFile(refs.fileInput.files[0]);
+        // Usa lastFile en lugar de fileInput.files[0] para cubrir el caso en que
+        // el archivo llegó por drag-and-drop o por fileInputAlt (no por fileInput).
+        if (lastFile) handleFile(lastFile);
       });
 
       hideStatus();
