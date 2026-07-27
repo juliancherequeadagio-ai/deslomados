@@ -1372,8 +1372,9 @@
           </ul>
         </aside>
       </div>
-      <div id="status" class="status"></div>
     </section>
+    <!-- Status fuera del hero para que sea visible aunque el hero esté oculto -->
+    <div id="status" class="status"></div>
 
     <div id="loadingOverlay" class="loading-overlay hidden">
       <div class="loading-box">
@@ -3127,8 +3128,15 @@
         }
       }
 
-      refs.fileInput.addEventListener("change", event => handleFile(event.target.files[0]));
-      refs.fileInputAlt.addEventListener("change", event => handleFile(event.target.files[0]));
+      refs.fileInput.addEventListener("change", event => {
+        handleFile(event.target.files[0]);
+        // Reset para permitir volver a seleccionar el mismo archivo (change no dispara si el value no cambia).
+        event.target.value = "";
+      });
+      refs.fileInputAlt.addEventListener("change", event => {
+        handleFile(event.target.files[0]);
+        event.target.value = "";
+      });
       refs.changeFileBtn.addEventListener("click", () => refs.fileInputAlt.click());
       function syncDashboardPadding() {
         // Empuja el contenido del dashboard para que no quede tapado por la barra fija
@@ -3147,9 +3155,8 @@
       refs.dropZone.addEventListener("drop", event => {
         event.preventDefault();
         refs.dropZone.classList.remove("is-over");
-        const file = event.dataTransfer.files[0];
-        refs.fileInput.files = event.dataTransfer.files;
-        handleFile(file);
+        // fileInput.files es read-only — pasamos el File directamente a handleFile.
+        handleFile(event.dataTransfer.files[0]);
       });
 
       // Toggle dropdown
