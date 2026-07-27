@@ -498,7 +498,7 @@
 
     .top-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      grid-template-columns: repeat(5, minmax(148px, 1fr));
       gap: 10px;
       margin-top: 12px;
     }
@@ -1478,6 +1478,12 @@
           <div class="progress"><span></span></div>
           <p class="help" data-role="sub"></p>
         </article>
+        <article class="top-card" id="topAuraCard">
+          <h3>El que farmea más aura</h3>
+          <select id="auraSelect"></select>
+          <div class="champion" id="auraName">—</div>
+          <p class="help">Seleccionado manualmente · persiste en este browser</p>
+        </article>
       </div>
 
 
@@ -1656,6 +1662,8 @@
         topMonthCard: $("#topMonthCard"),
         topYearCard: $("#topYearCard"),
         topHistoryCard: $("#topHistoryCard"),
+        auraSelect: $("#auraSelect"),
+        auraName: $("#auraName"),
         personalityGrid: $("#personalityGrid"),
         signaturesGrid: $("#signaturesGrid"),
         emojiList: $("#emojiList"),
@@ -2315,6 +2323,7 @@
       }
 
       const LS_EXCLUDED_KEY = "tablero_excluded_people";
+      const LS_AURA_KEY     = "tablero_aura_person";
 
       function updatePeopleCount() {
         const total = refs.peopleCheckList.querySelectorAll("input").length;
@@ -2345,9 +2354,19 @@
         refs.peopleCheckList.addEventListener("change", readPeopleFilter);
       }
 
+      function initAuraCard(participants) {
+        const saved = localStorage.getItem(LS_AURA_KEY) || "";
+        refs.auraSelect.innerHTML = '<option value="">— elegir —</option>' +
+          participants.map(p =>
+            `<option value="${escapeAttr(p)}"${p === saved ? ' selected' : ''}>${escapeHtml(p)}</option>`
+          ).join("");
+        refs.auraName.textContent = saved || "—";
+      }
+
       function initFilters() {
         const participants = aggregateBySender(state.messages).map(item => item.sender).sort((a, b) => a.localeCompare(b));
         initPeopleFilter(participants);
+        initAuraCard(participants);
         if (state.messages.length) {
           refs.dateFrom.value = toDateInputValue(state.messages[0].date);
           refs.dateTo.value = toDateInputValue(state.messages[state.messages.length - 1].date);
@@ -3212,6 +3231,11 @@
         control.addEventListener("change", () => withLoading("Calculando...", renderAll))
       );
       [refs.weekSelect, refs.monthSelect, refs.yearSelect].forEach(control => control.addEventListener("change", renderTopCards));
+      refs.auraSelect.addEventListener("change", () => {
+        const name = refs.auraSelect.value;
+        refs.auraName.textContent = name || "—";
+        try { localStorage.setItem(LS_AURA_KEY, name); } catch(_) {}
+      });
       refs.lineGranTabs.addEventListener("click", e => {
         const btn = e.target.closest(".hot-tab");
         if (!btn) return;
