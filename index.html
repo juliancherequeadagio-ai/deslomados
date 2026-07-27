@@ -1009,8 +1009,7 @@
     }
 
     #recordsSection { flex: 7 1 0; min-width: 0; }
-    #hotTopicWeekly { flex: 1.5 1 0; min-width: 0; }
-    #signaturesSection { flex: 1.5 1 0; min-width: 0; }
+    #hotTopicWeekly { flex: 3 1 0; min-width: 0; }
 
     /* ── Récords históricos ──────────────────────────────────────────── */
     .records-grid {
@@ -1317,7 +1316,7 @@
       .top-grid { grid-template-columns: repeat(2, minmax(210px, 1fr)); }
       .main-grid { grid-template-columns: 1fr; }
       .records-hot-grid { flex-direction: column; }
-      #hotTopicWeekly, #signaturesSection { flex: 1 1 auto; }
+      #hotTopicWeekly { flex: 1 1 auto; }
     }
 
     @media (max-width: 760px) {
@@ -1520,11 +1519,12 @@
           </div>
           <div id="hotTopic"></div>
         </article>
-        <article id="signaturesSection" class="panel">
-          <div class="panel-head"><div><h2>Firma lexica</h2><p>Las palabras mas caracteristicas de cada persona.</p></div></div>
-          <div id="signaturesGrid" class="signature-grid"></div>
-        </article>
       </div><!-- /.records-hot-grid -->
+
+      <article id="signaturesSection" class="panel full">
+        <div class="panel-head"><div><h2>Firma lexica</h2><p>Las palabras mas caracteristicas de cada persona.</p></div></div>
+        <div id="signaturesGrid" class="signature-grid"></div>
+      </article>
 
       <article class="panel full" id="lineChartSection">
         <div class="panel-head">
