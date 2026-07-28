@@ -1794,9 +1794,12 @@
 
       function decodeZipName(bytes, flags) {
         // Bit 11 (0x0800) del flag indica que el nombre usa UTF-8 (EFS flag del spec ZIP).
-        // Si el bit no está, el nombre está en la codepage legacy (CP437 / DOS Latin US),
-        // que era el default antes de que el spec adoptara Unicode.
-        const decoder = new TextDecoder((flags & 0x0800) ? "utf-8" : "cp437", { fatal: false });
+        // Si el bit no está, el nombre está en la codepage legacy (CP437 / DOS Latin US).
+        // "cp437" no es un label válido en el estándar WHATWG Encoding (que usa Chrome),
+        // así que TextDecoder lo ignoraba y decodificaba todo como UTF-8 de todas formas.
+        // Se usa "windows-1252" como aproximación soportada: cubre la mayoría de caracteres
+        // Latin Western que CP437 incluía (nombres de archivos con tildes, ñ, etc.).
+        const decoder = new TextDecoder((flags & 0x0800) ? "utf-8" : "windows-1252", { fatal: false });
         return decoder.decode(bytes);
       }
 
