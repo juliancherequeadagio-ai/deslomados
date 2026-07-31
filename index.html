@@ -498,7 +498,7 @@
 
     .top-grid {
       display: grid;
-      grid-template-columns: repeat(5, minmax(148px, 1fr));
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
       gap: 10px;
       margin-top: 12px;
     }
@@ -1444,6 +1444,11 @@
           <label>Farmea más aura
             <select id="auraSelect"></select>
           </label>
+          <label>Stickers de Loan
+            <input id="loanStickerInput" type="number" min="0" value="0"
+              style="width:72px;padding:3px 6px;font-size:11px;min-height:24px;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,.06);color:inherit;text-align:center;"
+              title="Ingresá la cantidad de stickers de Loan" />
+          </label>
         </div>
       </div>
 
@@ -1484,6 +1489,11 @@
         <article class="top-card" id="topAuraCard">
           <h3>El que farmea más aura</h3>
           <div class="champion" id="auraName">—</div>
+        </article>
+        <article class="top-card" id="topLoanStickerCard" style="border-color:rgba(248,214,109,.35);background:linear-gradient(180deg,rgba(248,214,109,.13),rgba(255,255,255,.04));">
+          <h3>Stickers de Loan</h3>
+          <div class="champion" id="loanStickerDisplay" style="color:#f8d66d;">0</div>
+          <div class="champion-count" style="color:rgba(248,214,109,.8);">stickers enviados</div>
         </article>
       </div>
 
@@ -1665,6 +1675,8 @@
         topHistoryCard: $("#topHistoryCard"),
         auraSelect: $("#auraSelect"),
         auraName: $("#auraName"),
+        loanStickerInput: $("#loanStickerInput"),
+        loanStickerDisplay: $("#loanStickerDisplay"),
         personalityGrid: $("#personalityGrid"),
         signaturesGrid: $("#signaturesGrid"),
         emojiList: $("#emojiList"),
@@ -2326,8 +2338,9 @@
         if (items.length) select.value = items[items.length - 1].key;
       }
 
-      const LS_EXCLUDED_KEY = "tablero_excluded_people";
-      const LS_AURA_KEY     = "tablero_aura_person";
+      const LS_EXCLUDED_KEY    = "tablero_excluded_people";
+      const LS_AURA_KEY        = "tablero_aura_person";
+      const LS_LOAN_STICKER_KEY = "tablero_loan_stickers";
 
       function updatePeopleCount() {
         const total = refs.peopleCheckList.querySelectorAll("input").length;
@@ -2365,6 +2378,13 @@
             `<option value="${escapeAttr(p)}"${p === saved ? ' selected' : ''}>${escapeHtml(p)}</option>`
           ).join("");
         refs.auraName.textContent = saved || "—";
+      }
+
+      function initLoanStickerCard() {
+        const saved = localStorage.getItem(LS_LOAN_STICKER_KEY);
+        const val = saved !== null ? parseInt(saved, 10) : 0;
+        refs.loanStickerInput.value = val;
+        refs.loanStickerDisplay.textContent = val.toLocaleString("es-AR");
       }
 
       function initFilters() {
@@ -3154,6 +3174,7 @@
           state.textFileName = textFileName || file.name || "chat.txt";
           state.inferredOrder = selectedOrder;
           initFilters();
+          initLoanStickerCard();
           refs.heroSection.classList.add("hidden");
           refs.dashboard.classList.remove("hidden");
           showLoading("Generando dashboard...");
@@ -3239,6 +3260,12 @@
         const name = refs.auraSelect.value;
         refs.auraName.textContent = name || "—";
         try { localStorage.setItem(LS_AURA_KEY, name); } catch(_) {}
+      });
+
+      refs.loanStickerInput.addEventListener("input", () => {
+        const val = Math.max(0, parseInt(refs.loanStickerInput.value, 10) || 0);
+        refs.loanStickerDisplay.textContent = val.toLocaleString("es-AR");
+        try { localStorage.setItem(LS_LOAN_STICKER_KEY, val); } catch(_) {}
       });
       refs.lineGranTabs.addEventListener("click", e => {
         const btn = e.target.closest(".hot-tab");
