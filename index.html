@@ -1449,6 +1449,9 @@
               style="width:72px;padding:3px 6px;font-size:11px;min-height:24px;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,.06);color:inherit;text-align:center;"
               title="Ingresá la cantidad de stickers de Loan" />
           </label>
+          <label>Más fanático de Ferro
+            <select id="ferroSelect"></select>
+          </label>
         </div>
       </div>
 
@@ -1494,6 +1497,10 @@
           <h3>Stickers de Loan</h3>
           <div class="champion" id="loanStickerDisplay" style="color:#f8d66d;">0</div>
           <div class="champion-count" style="color:rgba(248,214,109,.8);">stickers enviados</div>
+        </article>
+        <article class="top-card" id="topFerroCard" style="border-color:rgba(34,139,34,.45);background:linear-gradient(180deg,rgba(34,139,34,.15),rgba(255,255,255,.04));">
+          <h3>El más fanático de Ferro</h3>
+          <div class="champion" id="ferroName" style="color:#4caf50;">—</div>
         </article>
       </div>
 
@@ -1677,6 +1684,8 @@
         auraName: $("#auraName"),
         loanStickerInput: $("#loanStickerInput"),
         loanStickerDisplay: $("#loanStickerDisplay"),
+        ferroSelect: $("#ferroSelect"),
+        ferroName: $("#ferroName"),
         personalityGrid: $("#personalityGrid"),
         signaturesGrid: $("#signaturesGrid"),
         emojiList: $("#emojiList"),
@@ -2341,6 +2350,7 @@
       const LS_EXCLUDED_KEY    = "tablero_excluded_people";
       const LS_AURA_KEY        = "tablero_aura_person";
       const LS_LOAN_STICKER_KEY = "tablero_loan_stickers";
+      const LS_FERRO_KEY        = "tablero_ferro_person";
 
       function updatePeopleCount() {
         const total = refs.peopleCheckList.querySelectorAll("input").length;
@@ -2387,10 +2397,20 @@
         refs.loanStickerDisplay.textContent = val.toLocaleString("es-AR");
       }
 
+      function initFerroCard(participants) {
+        const saved = localStorage.getItem(LS_FERRO_KEY) || "";
+        refs.ferroSelect.innerHTML = '<option value="">— elegir —</option>' +
+          participants.map(p =>
+            `<option value="${escapeAttr(p)}"${p === saved ? ' selected' : ''}>${escapeHtml(p)}</option>`
+          ).join("");
+        refs.ferroName.textContent = saved || "—";
+      }
+
       function initFilters() {
         const participants = aggregateBySender(state.messages).map(item => item.sender).sort((a, b) => a.localeCompare(b));
         initPeopleFilter(participants);
         initAuraCard(participants);
+        initFerroCard(participants);
         if (state.messages.length) {
           refs.dateFrom.value = toDateInputValue(state.messages[0].date);
           refs.dateTo.value = toDateInputValue(state.messages[state.messages.length - 1].date);
@@ -2408,6 +2428,18 @@
         return escapeHtml(value).replace(/'/g, "&#39;");
       }
 
+      // Regex para detectar "siga siga" o "siga, siga" (con cualquier separación de espacios/coma)
+      const SIGA_RE = /siga[\s,]+siga/gi;
+
+      function countSiga(messages) {
+        let total = 0;
+        for (const msg of messages) {
+          const matches = msg.text.match(SIGA_RE);
+          if (matches) total += matches.length;
+        }
+        return total;
+      }
+
       function renderKpis(messages) {
         const ranking = aggregateBySender(messages);
         const activeDays = new Set(messages.map(msg => dayKey(msg.date))).size;
@@ -2416,13 +2448,15 @@
         const first = messages[0]?.date;
         const last = messages[messages.length - 1]?.date;
         const top = ranking[0];
+        const sigaCount = countSiga(messages);
         const kpis = [
           { label: "Mensajes", value: formatNumber(messages.length), sub: first && last ? `${formatDateShort(first)} a ${formatDateShort(last)}` : "Sin datos" },
           { label: "Participantes", value: formatNumber(ranking.length), sub: top ? `Lidera: ${top.sender}` : "-" },
           { label: "Multimedia", value: formatNumber(media), sub: formatPercent(messages.length ? media * 100 / messages.length : 0) + " del total" },
           { label: "Palabras", value: formatNumber(words), sub: messages.length ? formatNumber(Math.round(words / messages.length)) + " por mensaje" : "-" },
           { label: "Dias activos", value: formatNumber(activeDays), sub: activeDays ? formatNumber(Math.round(messages.length / activeDays)) + " mensajes/dia" : "-" },
-          { label: "Top persona", value: top ? formatNumber(top.messages) : "0", sub: top ? top.sender : "-" }
+          { label: "Top persona", value: top ? formatNumber(top.messages) : "0", sub: top ? top.sender : "-" },
+          { label: "Veces que se sigui\xf3", value: formatNumber(sigaCount), sub: "\"siga siga\" en el chat" }
         ];
         refs.kpiGrid.innerHTML = kpis.map(kpi => `
           <article class="kpi">
@@ -3266,6 +3300,12 @@
         const val = Math.max(0, parseInt(refs.loanStickerInput.value, 10) || 0);
         refs.loanStickerDisplay.textContent = val.toLocaleString("es-AR");
         try { localStorage.setItem(LS_LOAN_STICKER_KEY, val); } catch(_) {}
+      });
+
+      refs.ferroSelect.addEventListener("change", () => {
+        const name = refs.ferroSelect.value;
+        refs.ferroName.textContent = name || "—";
+        try { localStorage.setItem(LS_FERRO_KEY, name); } catch(_) {}
       });
       refs.lineGranTabs.addEventListener("click", e => {
         const btn = e.target.closest(".hot-tab");
